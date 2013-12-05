@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<actions>
+        <action>
+            <actionName>CUSTOM-Compile</actionName>
+            <displayName>Compile</displayName>
+            <goals>
+                <goal>clean</goal>
+                <goal>install</goal>
+                <goal>junit:junit</goal>
+                <goal>-e</goal>
+            </goals>
+            <activatedProfiles>
+                <activatedProfile>lotarisBuildSource</activatedProfile>
+                <!--<activatedProfile>lotarisTest</activatedProfile>-->
+            </activatedProfiles>
+        </action>
+    </actions>
