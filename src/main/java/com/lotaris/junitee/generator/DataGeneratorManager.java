@@ -119,6 +119,7 @@ public class DataGeneratorManager implements TestRule {
 				dataGenerator.before();
 			}
 			entityManager.getTransaction().commit();
+			entityManager.clear();
 		}
 		catch (Exception e) {
 			throw new DataGeneratorException("An unexpected error occured during before phase of generators.", e);
