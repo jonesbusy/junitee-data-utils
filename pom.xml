@@ -5,7 +5,7 @@
   <groupId>com.lotaris.junitee</groupId>
   <artifactId>junitee-data-utils</artifactId>
 	<name>JUnit J2EE Data Utils</name>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <properties>
@@ -49,6 +49,18 @@
 						<skip>true</skip>
 					</configuration>
 				</plugin>
+				
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-deploy-plugin</artifactId>
+					<version>2.8.1</version>
+				</plugin>
+
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>versions-maven-plugin</artifactId>
+					<version>2.0</version>
+				</plugin>				
 				
 				<plugin>
 					<groupId>com.lotaris.maven.rox.plugins</groupId>
@@ -99,6 +111,34 @@
 			</resource>
 		</resources>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>lotarisVersion</id>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>versions-maven-plugin</artifactId>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>		
+	</profiles>
+
+	<distributionManagement>
+		<repository>
+			<id>LotarisReleases</id>
+			<name>Lotaris Release Repository</name>
+			<url>${settings.lotaris.nexus.lotaris.releases.url}</url>
+		</repository>
+		<snapshotRepository>
+			<id>LotarisSnapshots</id>
+			<name>Lotaris Snapshot Repository</name>
+			<url>${settings.lotaris.nexus.lotaris.snapshots.url}</url>
+		</snapshotRepository>
+	</distributionManagement>
 
 	<repositories>
 		<repository>
