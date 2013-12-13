@@ -58,8 +58,12 @@ public class DataGeneratorManager implements TestRule {
 			@Override
 			public void evaluate() throws Throwable {
 				before(description);
-				base.evaluate();
-				after(description);
+				try {
+					base.evaluate();
+				}
+				finally {
+					after(description);
+				}
 			}
 		};
 	}	
@@ -133,16 +137,20 @@ public class DataGeneratorManager implements TestRule {
 	 * @throws Throwable Any errors 
 	 */
 	private void after(Description description) throws DataGeneratorException {
-		try {
-			// Manage a transaction and call the operation to be done after the test ends.
-			entityManager.getTransaction().begin();
-			for (IDataGenerator dataGenerator : dataGenerators.values()) {
-				dataGenerator.after();
+		DataGenerator dgAnnotation = description.getAnnotation(DataGenerator.class);
+		
+		if (dgAnnotation != null && dgAnnotation.executeAfter()) {
+			try {
+				// Manage a transaction and call the operation to be done after the test ends.
+				entityManager.getTransaction().begin();
+				for (IDataGenerator dataGenerator : dataGenerators.values()) {
+					dataGenerator.after();
+				}
+				entityManager.getTransaction().commit();
 			}
-			entityManager.getTransaction().commit();
-		}
-		catch (Exception e) {
-			throw new DataGeneratorException("An unexpected error occured during after phase of generators.", e);
+			catch (Exception e) {
+				throw new DataGeneratorException("An unexpected error occured during after phase of generators.", e);
+			}
 		}
 	}
 }

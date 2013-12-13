@@ -14,5 +14,13 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DataGenerator {
+	/**
+	 * @return List of data generators to use
+	 */
 	Class<? extends IDataGenerator>[] value();
+	
+	/**
+	 * @return Define if after must be run
+	 */
+	boolean executeAfter() default true;
 }
