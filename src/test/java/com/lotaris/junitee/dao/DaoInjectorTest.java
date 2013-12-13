@@ -3,6 +3,7 @@ package com.lotaris.junitee.dao;
 import com.lotaris.junitee.dao.DaoInjector;
 import com.lotaris.junitee.dummy.ImplementationDao;
 import com.lotaris.junitee.dummy.DummyGeneratorWithDaos;
+import com.lotaris.junitee.dummy.GeneratorWithComplexDao;
 import com.lotaris.junitee.dummy.GeneratorWithInheritance;
 import com.lotaris.rox.annotations.RoxableTest;
 import javax.persistence.EntityManager;
@@ -57,16 +58,6 @@ public class DaoInjectorTest {
 	}	
 
 	@Test
-	@RoxableTest(key = "7cfc9e34557e")
-	public void anyDaoInjectedWithCustomFieldNameForEntityManagerFieldShouldHaveTheFieldNotNull() {
-		DummyGeneratorWithDaos injected = new DummyGeneratorWithDaos();
-		
-		DaoInjector.inject(injected, em);
-		
-		assertNotNull(injected.secondDao.entityManager);
-	}
-	
-	@Test
 	@RoxableTest(key = "60cf490b470d")
 	public void generatorThatInheritsFromAnotherGeneratorShouldHaveAllTheAnnotatedFieldsInjectedAcrossInheritanceChain() {
 		GeneratorWithInheritance injected = new GeneratorWithInheritance();
@@ -79,8 +70,45 @@ public class DaoInjectorTest {
 		assertNotNull(((ImplementationDao) injected.iCustomDao).em);
 		assertNotNull(injected.customDao);
 		assertNotNull(injected.customDao.em);
-		assertNotNull(injected.secondDao);
-		assertNotNull(injected.secondDao.entityManager);
 	}
 	
+	@Test
+	@RoxableTest(key = "92021e674e90")
+	public void generatorWithComplexDaoShouldHaveTheEntityManagerAndNestedEjbInjectedEveryWhere() {
+		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
+		
+		DaoInjector.inject(generator, em);
+		
+		assertNotNull(generator.thirdDao.abstractEm);
+		assertNotNull(generator.thirdDao.thirdEm);
+		assertNotNull(generator.thirdDao.firstDao.firstEm);
+		assertNotNull(generator.thirdDao.secondDao.secondEm);
+		assertNotNull(generator.thirdDao.secondDao.firstDao.firstEm);
+		assertNotNull(generator.thirdDao.secondDao.firstDao.thirdDao.thirdEm);
+		assertNotNull(generator.thirdDao.secondDao.secondDao.secondEm);
+		assertNotNull(generator.thirdDao.secondDao.secondInstanceOfFirstDao.firstEm);
+	}
+	
+	@Test
+	@RoxableTest(key = "3dd95a5fb06d")
+	public void generatorWithComplexDaoThatHasCyclyReferenceShouldUseTheSameInjectedObjects() {
+		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
+		
+		DaoInjector.inject(generator, em);
+		
+		assertEquals(generator.thirdDao, generator.thirdDao.firstDao.thirdDao);
+	}
+
+	@Test
+	@RoxableTest(key = "19d46d1b2d93")
+	public void onlyOneInstanceOfEjbShouldBeInstantiatedInComplexObjectGraph() {
+		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
+		
+		DaoInjector.inject(generator, em);
+		
+		assertEquals(generator.thirdDao, generator.thirdDao.firstDao.thirdDao);
+		assertEquals(generator.thirdDao.firstDao, generator.thirdDao.secondDao.firstDao);
+		assertEquals(generator.thirdDao.secondDao.firstDao, generator.thirdDao.secondDao.secondInstanceOfFirstDao);
+		assertEquals(generator.thirdDao.secondDao, generator.thirdDao.secondDao.secondDao);
+	}
 }

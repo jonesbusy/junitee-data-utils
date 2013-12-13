@@ -2,6 +2,9 @@ package com.lotaris.junitee.dao;
 
 import com.lotaris.junitee.utils.InflectorHelper;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+import javax.ejb.EJB;
 import javax.persistence.EntityManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +44,7 @@ public class DaoInjector {
 		if (cl.getSuperclass() != Object.class) {
 			inject(cl.getSuperclass().cast(obj), cl.getSuperclass(), em);
 		}
-		
+
 		// Get all the fields of the object to check if the annotation is present.
 		for (Field field : cl.getDeclaredFields()) {
 			DAO daoAnnotation = field.getAnnotation(DAO.class);
@@ -68,36 +71,106 @@ public class DaoInjector {
 				}
 				
 				// Prepare working variables for the entity manager injection.
-				Field emField = null;
-				String emFieldName = daoAnnotation.fieldName().isEmpty() ? "em" : daoAnnotation.fieldName();
 				Class daoClass = dao.getClass();
 
-				// Try to find the first field that correspond to the name.
+				// Try to set the entity manager in the class hierarchy to the object
 				do {
-					try {
-						emField = daoClass.getDeclaredField(emFieldName);
+					for (Field emField : daoClass.getDeclaredFields()) {
+						if (emField.getType() == EntityManager.class) {
+							injectEntityManager(dao, emField, em);
+						}
 					}
-					catch (NoSuchFieldException | SecurityException ex) {
-						daoClass = daoClass.getSuperclass();
-					}
-				} while (daoClass != null && emField == null);
-					
-				// Be sure a field is found, otherwise continue to the remaining injections to do.
-				if (emField == null) {
-					LOG.warn("Unable to retrieve the field {} on the DAO {}", emFieldName, dao.getClass().getSimpleName());
-					continue;
-				}
+					daoClass = daoClass.getSuperclass();
+				} while (daoClass != null);
 				
-				// Try to inject the entity manager to the DAO.
-				try {
-					emField.setAccessible(true);
-					emField.set(dao, em);
-					emField.setAccessible(false);
+				// Inject the EJBs
+				Map<Class, Object> registry = new HashMap<>();
+				registry.put(dao.getClass(), dao);
+				injectEjb(dao, dao.getClass(), em, registry);
+			}
+		}
+	}
+	
+	/**
+	 * Inject entity manager into an object
+	 * 
+	 * @param obj The object for which the entity manager should be injected
+	 * @param field The field to inject
+	 * @param em The entity manager to inject
+	 */
+	private static void injectEntityManager(Object obj, Field field, EntityManager em) {
+		// Try to inject the entity manager to the DAO.
+		try {
+			field.setAccessible(true);
+			field.set(obj, em);
+			field.setAccessible(false);
+		}
+		catch (IllegalAccessException | IllegalArgumentException | SecurityException ex) {
+			LOG.warn("Unable to set the entity manager on field {} the object {}", field.getName(), obj.getClass().getSimpleName(), ex);
+		}
+	}
+
+	/**
+	 * Utility method to inject the EJB to a field of an object
+	 * 
+	 * @param obj The object to inject the EJB instance
+	 * @param field The field of the object to inject
+	 * @param ejb The EJB to inject
+	 */
+	private static void injectEjbField(Object obj, Field field, Object ejb) {
+		// Try to inject the entity manager to the DAO.
+		try {
+			field.setAccessible(true);
+			field.set(obj, ejb);
+			field.setAccessible(false);
+		}
+		catch (IllegalAccessException | IllegalArgumentException | SecurityException ex) {
+			LOG.warn("Unable to set the EJB on field {} of the object {}", field.getName(), obj.getClass().getSimpleName(), ex);
+		}
+	}
+
+	/**
+	 * Inject recursively any EJB detected in an object graph through 
+	 * Java Reflection. Store a cache of object to avoid infinite loops.
+	 * 
+	 * @param obj The object where to get the EJB fields
+	 * @param cl The class of the object to check inheritance
+	 * @param em The entity manager to inject when a field of that type is detected
+	 * @param registry The cache of EJB
+	 */
+	private static void injectEjb(Object obj, Class cl, EntityManager em, Map<Class, Object> registry) {
+		// Inject in the super class fields if any
+		if (cl.getSuperclass() != Object.class) {
+			injectEjb(cl.getSuperclass().cast(obj), cl.getSuperclass(), em, registry);
+		}
+
+		// Iterate on all the fields present on the class
+		for (Field field : cl.getDeclaredFields()) {
+			// Check if the field is an entity manager
+			if (field.getType() == EntityManager.class) {
+				injectEntityManager(obj, field, em);
+			}
+			
+			// Check if the field is annotated
+			else if (field.getAnnotation(EJB.class) != null) {
+				// Try to retrieve an EJB already created
+				Object ejb = registry.get(field.getType());
+				
+				// Create new ejb and store the reference to that ejb
+				if (ejb == null) {
+					try {
+						ejb = field.getType().newInstance();
+						registry.put(field.getType(), ejb);
+						injectEjb(ejb, field.getType(), em, registry);
+					}
+					catch (IllegalAccessException | InstantiationException ex) {
+						LOG.warn("Unable to create EJB {}", field.getType().getCanonicalName(), ex);
+						continue;
+					}
 				}
-				catch (IllegalAccessException | IllegalArgumentException | SecurityException ex) {
-					LOG.warn("Unable to set the entity manager on the DAO {}", dao.getClass().getSimpleName(), ex);
-					continue;
-				}
+
+				// Inject the ejb to the object field
+				injectEjbField(obj, field, ejb);
 			}
 		}
 	}

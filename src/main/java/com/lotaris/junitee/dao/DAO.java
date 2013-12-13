@@ -14,9 +14,4 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DAO {
-	/**
-	 * Define the name of the field to set the entity manager
-	 * @return The field name, empty name if not filled
-	 */
-	String fieldName() default "";
 }

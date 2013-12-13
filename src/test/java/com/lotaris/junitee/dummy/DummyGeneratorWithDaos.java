@@ -13,7 +13,4 @@ public class DummyGeneratorWithDaos {
 	
 	@DAO
 	public ImplementationDao customDao;
-	
-	@DAO(fieldName = "entityManager")
-	public DaoWithCustomEntityManagerField secondDao;
 }
