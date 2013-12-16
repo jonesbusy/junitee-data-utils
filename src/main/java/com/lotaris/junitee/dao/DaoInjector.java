@@ -140,7 +140,7 @@ public class DaoInjector {
 	 */
 	private static void injectEjb(Object obj, Class cl, EntityManager em, Map<Class, Object> registry) {
 		// Inject in the super class fields if any
-		if (cl.getSuperclass() != Object.class) {
+		if (cl.getSuperclass() != null && cl.getSuperclass() != Object.class) {
 			injectEjb(cl.getSuperclass().cast(obj), cl.getSuperclass(), em, registry);
 		}
 
@@ -153,24 +153,32 @@ public class DaoInjector {
 			
 			// Check if the field is annotated
 			else if (field.getAnnotation(EJB.class) != null) {
-				// Try to retrieve an EJB already created
-				Object ejb = registry.get(field.getType());
+				// Retrieve the class of the EJB
+				try {
+					Class ejbRealClass = DaoInjector.class.getClassLoader().loadClass(InflectorHelper.retrieveInstantiableClassName(field.getType()));
 				
-				// Create new ejb and store the reference to that ejb
-				if (ejb == null) {
-					try {
-						ejb = field.getType().newInstance();
-						registry.put(field.getType(), ejb);
-						injectEjb(ejb, field.getType(), em, registry);
-					}
-					catch (IllegalAccessException | InstantiationException ex) {
-						LOG.warn("Unable to create EJB {}", field.getType().getCanonicalName(), ex);
-						continue;
-					}
-				}
+					// Try to retrieve an EJB already created
+					Object ejb = registry.get(ejbRealClass);
 
-				// Inject the ejb to the object field
-				injectEjbField(obj, field, ejb);
+					// Create new ejb and store the reference to that ejb
+					if (ejb == null) {
+						try {
+							ejb = ejbRealClass.newInstance();
+							registry.put(ejbRealClass, ejb);
+							injectEjb(ejb, ejbRealClass, em, registry);
+						}
+						catch (IllegalAccessException | InstantiationException ex) {
+							LOG.warn("Unable to create EJB {}", field.getType().getCanonicalName(), ex);
+							continue;
+						}
+					}
+
+					// Inject the ejb to the object field
+					injectEjbField(obj, field, ejb);
+				}
+				catch (ClassNotFoundException cnfe) {
+					LOG.warn("Unable to retrieve EJB {} implementation class", field.getType().getCanonicalName(), cnfe);
+				}
 			}
 		}
 	}

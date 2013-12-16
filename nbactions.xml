@@ -6,7 +6,7 @@
 		<goals>
 			<goal>clean</goal>
 			<goal>install</goal>
-			<goal>junit:junit</goal>
+			<goal>rox-junit:junit</goal>
 			<goal>-e</goal>
 			<goal>-PlotarisBuildSource</goal>
 		</goals>

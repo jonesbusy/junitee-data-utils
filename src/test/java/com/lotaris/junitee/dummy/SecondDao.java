@@ -12,7 +12,7 @@ public class SecondDao {
 	public EntityManager secondEm;
 	
 	@EJB
-	public FirstDao firstDao;
+	public IFirstDao firstDao;
 	
 	@EJB
 	public SecondDao secondDao;

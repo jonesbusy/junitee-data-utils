@@ -1,8 +1,8 @@
 package com.lotaris.junitee.dao;
 
-import com.lotaris.junitee.dao.DaoInjector;
 import com.lotaris.junitee.dummy.ImplementationDao;
 import com.lotaris.junitee.dummy.DummyGeneratorWithDaos;
+import com.lotaris.junitee.dummy.FirstDao;
 import com.lotaris.junitee.dummy.GeneratorWithComplexDao;
 import com.lotaris.junitee.dummy.GeneratorWithInheritance;
 import com.lotaris.rox.annotations.RoxableTest;
@@ -83,8 +83,8 @@ public class DaoInjectorTest {
 		assertNotNull(generator.thirdDao.thirdEm);
 		assertNotNull(generator.thirdDao.firstDao.firstEm);
 		assertNotNull(generator.thirdDao.secondDao.secondEm);
-		assertNotNull(generator.thirdDao.secondDao.firstDao.firstEm);
-		assertNotNull(generator.thirdDao.secondDao.firstDao.thirdDao.thirdEm);
+		assertNotNull(((FirstDao) generator.thirdDao.secondDao.firstDao).firstEm);
+		assertNotNull(((FirstDao) generator.thirdDao.secondDao.firstDao).thirdDao.thirdEm);
 		assertNotNull(generator.thirdDao.secondDao.secondDao.secondEm);
 		assertNotNull(generator.thirdDao.secondDao.secondInstanceOfFirstDao.firstEm);
 	}

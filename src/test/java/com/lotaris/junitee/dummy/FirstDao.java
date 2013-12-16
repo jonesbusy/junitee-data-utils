@@ -8,7 +8,7 @@ import javax.persistence.EntityManager;
  * 
  * @author Laurent Prevost, laurent.prevost@lotaris.com
  */
-public class FirstDao {
+public class FirstDao implements IFirstDao {
 	public EntityManager firstEm;
 	
 	@EJB

@@ -64,13 +64,18 @@
 				
 				<plugin>
 					<groupId>com.lotaris.maven.rox.plugins</groupId>
-					<artifactId>maven-rox-junit-plugin</artifactId>
-					<version>1.1.0</version>
+					<artifactId>rox-junit-maven-plugin</artifactId>
+					<version>2.0.2</version>
+					<configuration>
+						<miniRoxListenerClass>com.lotaris.minirox.client.junit.MiniRoxListener</miniRoxListenerClass>
+						<miniRoxFilterClass>com.lotaris.minirox.client.MiniRoxFilter</miniRoxFilterClass>
+						<roxConfig>${project.basedir}/target/classes/rox.yml</roxConfig>
+					</configuration>
 					<dependencies>
 						<dependency>
 							<groupId>com.lotaris.minirox.client</groupId>
 							<artifactId>minirox-client-junit</artifactId>
-							<version>1.1.0</version>
+							<version>2.0.0</version>
 						</dependency>
 					</dependencies>
 				</plugin>
@@ -90,11 +95,8 @@
 
 			<plugin>
 				<groupId>com.lotaris.maven.rox.plugins</groupId>
-				<artifactId>maven-rox-junit-plugin</artifactId>
+				<artifactId>rox-junit-maven-plugin</artifactId>
 				<configuration>
-					<miniRoxListenerClass>com.lotaris.minirox.client.junit.MiniRoxListener</miniRoxListenerClass>
-					<miniRoxFilterClass>com.lotaris.minirox.client.MiniRoxFilter</miniRoxFilterClass>
-					<roxConfig>${project.basedir}/target/classes/rox.json</roxConfig>
 <!--			<filters>
 						<filter>55b73b7b80bc</filter>
 					</filters> -->
@@ -106,7 +108,7 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<includes>
-					<include>rox.json</include>
+					<include>rox.yml</include>
 				</includes>
 			</resource>
 		</resources>
@@ -179,8 +181,8 @@
   <dependencies>
 		<dependency>
 			<groupId>com.lotaris.rox.client</groupId>
-			<artifactId>rox-client-core</artifactId>
-			<version>1.1.0</version>
+			<artifactId>rox-client-junit</artifactId>
+			<version>2.0.0</version>
 			<scope>test</scope>
 		</dependency>
 		
@@ -196,12 +198,6 @@
 			<version>2.5.2-M1</version>
 			<scope>test</scope>
 		</dependency>
-<!--				<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<scope>test</scope>
-		</dependency>-->
-		
 		
 		<dependency>
 			<groupId>javax</groupId>
