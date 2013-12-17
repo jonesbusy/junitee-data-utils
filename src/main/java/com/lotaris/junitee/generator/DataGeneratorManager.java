@@ -1,10 +1,12 @@
 package com.lotaris.junitee.generator;
 
+import com.lotaris.junitee.context.ContextInjector;
+import com.lotaris.junitee.context.IContextRule;
+import com.lotaris.junitee.context.GeneratorContext;
 import com.lotaris.junitee.dao.DaoInjector;
 import java.util.HashMap;
 import java.util.Map;
 import javax.persistence.EntityManager;
-import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
@@ -16,7 +18,7 @@ import org.junit.runners.model.Statement;
  * 
  * @author Laurent Prevost, laurent.prevost@lotaris.com
  */
-public class DataGeneratorManager implements TestRule {
+public class DataGeneratorManager implements IContextRule {
 	/**
 	 * Entity manager to share across all the data generators and DAOs in the factories.
 	 */
@@ -42,27 +44,24 @@ public class DataGeneratorManager implements TestRule {
 
 	@Override
 	public Statement apply(Statement base, Description description) {
-		return statement(base, description);
+		return apply(new GeneratorContext(), base, description);
 	}
 
 	/**
 	 * Method to avoid problems with anonymous class and final variables otherwise
 	 * the content of this method can be put on the method apply
-	 * 
-	 * @param base Base statement
-	 * @param description Description
-	 * @return New statement
 	 */
-	private Statement statement(final Statement base, final Description description) {
+	@Override
+	public Statement apply(final GeneratorContext context, final Statement base, final Description description) {
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
-				before(description);
+				before(context, description);
 				try {
 					base.evaluate();
 				}
 				finally {
-					after(description);
+					after(context, description);
 				}
 			}
 		};
@@ -83,9 +82,10 @@ public class DataGeneratorManager implements TestRule {
 	 * Actions to be done before a test is run
 	 * 
 	 * @param description The description to get test data
+	 * @param context The generator context
 	 * @throws Throwable Any errors 
 	 */
-	private void before(Description description) throws DataGeneratorException {
+	private void before(GeneratorContext context, Description description) throws DataGeneratorException {
 		// Clear the generators used in a previous test. Clear must be there because 
 		// there is no warranty to reach the after if a test fails.
 		dataGenerators.clear();
@@ -104,6 +104,7 @@ public class DataGeneratorManager implements TestRule {
 					// Instantiate a new data generator, inject the DAO and keep track of it.
 					IDataGenerator dataGenerator = dataGeneratorClass.newInstance();
 					DaoInjector.inject(dataGenerator, entityManager);
+					ContextInjector.inject(dataGenerator, context);
 					dataGenerators.put(dataGeneratorClass, dataGenerator);
 				}
 				catch (IllegalAccessException | InstantiationException ex) {
@@ -134,9 +135,10 @@ public class DataGeneratorManager implements TestRule {
 	 * Actions to be done after a test is run
 	 * 
 	 * @param description The description to get test data
+	 * @param context The generator context
 	 * @throws Throwable Any errors 
 	 */
-	private void after(Description description) throws DataGeneratorException {
+	private void after(GeneratorContext context, Description description) throws DataGeneratorException {
 		DataGenerator dgAnnotation = description.getAnnotation(DataGenerator.class);
 		
 		if (dgAnnotation != null && dgAnnotation.executeAfter()) {
