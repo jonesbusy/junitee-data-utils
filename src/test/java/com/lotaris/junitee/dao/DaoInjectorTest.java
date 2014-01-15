@@ -90,7 +90,7 @@ public class DaoInjectorTest {
 	}
 	
 	@Test
-	@RoxableTest(key = "3dd95a5fb06d")
+	@RoxableTest(key = "e9cef1d10b28")
 	public void generatorWithComplexDaoThatHasCyclyReferenceShouldUseTheSameInjectedObjects() {
 		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
 		
@@ -100,7 +100,7 @@ public class DaoInjectorTest {
 	}
 
 	@Test
-	@RoxableTest(key = "19d46d1b2d93")
+	@RoxableTest(key = "703196f776dd")
 	public void onlyOneInstanceOfEjbShouldBeInstantiatedInComplexObjectGraph() {
 		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
 		

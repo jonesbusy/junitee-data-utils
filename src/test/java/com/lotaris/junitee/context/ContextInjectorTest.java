@@ -23,7 +23,7 @@ public class ContextInjectorTest {
 	}
 	
 	@Test
-	@RoxableTest(key = "26a641c6d724")
+	@RoxableTest(key = "663c35b91734")
 	public void classWithImplementationContextFieldAnnotatedShouldHaveContextInjected() {
 		DummyGeneratorWithContexts injected = new DummyGeneratorWithContexts();
 		
@@ -36,7 +36,7 @@ public class ContextInjectorTest {
 	}
 
 	@Test
-	@RoxableTest(key = "b876e64689b8")
+	@RoxableTest(key = "fa001e9a8634")
 	public void generatorThatInheritsFromAnotherGeneratorShouldHaveAllTheAnnotatedFieldsInjectedAcrossInheritanceChain() {
 		GeneratorWithContextWithInheritance injected = new GeneratorWithContextWithInheritance();
 		

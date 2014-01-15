@@ -4,8 +4,11 @@ import com.lotaris.junitee.context.ContextInjector;
 import com.lotaris.junitee.context.IContextRule;
 import com.lotaris.junitee.context.GeneratorContext;
 import com.lotaris.junitee.dao.DaoInjector;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import javax.persistence.EntityManager;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -30,16 +33,30 @@ public class DataGeneratorManager implements IContextRule {
 	private Map<Class, IDataGenerator> dataGenerators = new HashMap<>();
 	
 	/**
+	 * Configuration for data generators
+	 */
+	private static final String CONFIGURATION_NAME = "/junitee.properties";
+	
+	/**
 	 * Force the construction of the data generator with an entity manager
 	 * 
 	 * @param entityManager Entity manager to use
 	 */
 	public DataGeneratorManager(EntityManager entityManager) {
 		this.entityManager = entityManager;
-	}
-
-	public EntityManager getEntityManager() {
-		return entityManager;
+		
+		// Try to load the configuration and configure the helper
+		try {
+			InputStream is = getClass().getResourceAsStream(CONFIGURATION_NAME);
+			
+			if (is != null) {
+				Properties configuration = new Properties();
+				configuration.load(is);
+				DataStateGeneratorHelper.configure(configuration);
+			}
+		}
+		catch (IOException ioe) {
+		}
 	}
 
 	@Override
@@ -116,9 +133,13 @@ public class DataGeneratorManager implements IContextRule {
 					+ "Only one instance of each generator can be specified in the annotation.");
 			}
 		}
-
+		
 		// Manage a transaction and call the operation to be done before the test starts.
 		try {
+			if (DataStateGeneratorHelper.hasStateGenerator()) {
+				DataStateGeneratorHelper.getStateGenerator().createState(entityManager);
+			}
+			
 			entityManager.getTransaction().begin();
 			for (IDataGenerator dataGenerator : dataGenerators.values()) {
 				dataGenerator.before();
@@ -145,10 +166,16 @@ public class DataGeneratorManager implements IContextRule {
 			try {
 				// Manage a transaction and call the operation to be done after the test ends.
 				entityManager.getTransaction().begin();
+			
 				for (IDataGenerator dataGenerator : dataGenerators.values()) {
 					dataGenerator.after();
 				}
+
 				entityManager.getTransaction().commit();
+				
+				if (DataStateGeneratorHelper.hasStateGenerator()) {
+					DataStateGeneratorHelper.getStateGenerator().restoreState(entityManager);
+				}
 			}
 			catch (Exception e) {
 				throw new DataGeneratorException("An unexpected error occured during after phase of generators.", e);

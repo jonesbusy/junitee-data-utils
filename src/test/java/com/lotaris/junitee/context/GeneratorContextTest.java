@@ -18,7 +18,7 @@ public class GeneratorContextTest {
 	}
 	
 	@Test
-	@RoxableTest(key = "1ed6b06ef9d8")
+	@RoxableTest(key = "c22e2c9c9594")
 	public void retrievingTheSameObjectPutInTheGeneratorContextShouldBePossible() {
 		Object obj = new Object();
 		
@@ -29,7 +29,7 @@ public class GeneratorContextTest {
 	}
 
 	@Test
-	@RoxableTest(key = "9a9340d4bbf6")
+	@RoxableTest(key = "33b966791d13")
 	public void puttingAnObjectOfTheSameTypeShouldOverrideTheFirstPut() {
 		Object obj1 = new Object();
 		Object obj2 = new Object();
@@ -43,7 +43,7 @@ public class GeneratorContextTest {
 	}
 
 	@Test
-	@RoxableTest(key = "0bdad1733d7a")
+	@RoxableTest(key = "d8746778a65a")
 	public void usingHasMethodOnTheGeneratorContextShouldAnswerTrueForAnObjectTypePresentInTheContext() {
 		Object obj = new Object();
 		

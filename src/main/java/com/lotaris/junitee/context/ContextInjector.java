@@ -1,6 +1,6 @@
 package com.lotaris.junitee.context;
 
-import com.lotaris.junitee.dao.*;
+import com.lotaris.junitee.dao.DaoInjector;
 import java.lang.reflect.Field;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * 
  * @author Laurent Prevost, laurent.prevost@lotaris.com
  */
-@Target({ElementType.METHOD, ElementType.TYPE})
+@Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface DataGenerator {
 	/**

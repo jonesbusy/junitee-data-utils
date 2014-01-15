@@ -4,8 +4,10 @@ import com.lotaris.junitee.dummy.BeforeCrashGenerator;
 import com.lotaris.junitee.dummy.DataGeneratorWithDao;
 import com.lotaris.junitee.dummy.DataGeneratorWithInheritanceAndDaos;
 import com.lotaris.junitee.dummy.DoNotCrashGenerator;
+import com.lotaris.junitee.dummy.DummyDataStateGenerator;
 import com.lotaris.rox.annotations.RoxableTest;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityTransaction;
 import org.junit.Before;
@@ -299,5 +301,53 @@ public class DataGeneratorManagerTest {
 
 		assertNotNull(gm.getDataGenerator(DataGeneratorWithInheritanceAndDaos.class).firstDao);
 		assertNotNull(gm.getDataGenerator(DataGeneratorWithInheritanceAndDaos.class).secondDao);
+	}
+
+	@Test
+	@RoxableTest(key = "9bada00f878e")
+	public void runTenTestMethodsShouldSeeOnlyOneConfigurationOfDataStateGeneratorAndTenCreateStateAndTenRestoreState() throws Throwable {
+		// Be sure that the dummy state generator is ready to be tested
+		try {
+			Field f = DataStateGeneratorHelper.class.getDeclaredField("stateGenerator");
+			f.setAccessible(true);
+			try {
+				f.set(null, null);
+			}
+			catch (IllegalAccessException | IllegalArgumentException e) {
+				throw new RuntimeException("Unable to reset the field stateGenerator on DataStateGeneratorHelper", e);
+			}
+		}
+		catch (NoSuchFieldException | SecurityException e) {
+			throw new RuntimeException("Unable to get the stateGenerator field on DataStateGeneratorHelper to do the tricky tests.", e);
+		}		
+		
+		DataGenerator annotation = new DataGenerator() {
+			@Override
+			public Class<? extends IDataGenerator>[] value() {
+				return new Class[] { DataGeneratorWithInheritanceAndDaos.class };
+			}
+
+			@Override
+			public Class<? extends Annotation> annotationType() {
+				return DataGenerator.class;
+			}
+
+			@Override
+			public boolean executeAfter() {
+				return true;
+			}
+		};
+		
+		when(em.getTransaction()).thenReturn(et);
+
+		for (int i = 0; i < 10; i++) {
+			Description description = Description.createSuiteDescription("Some description", annotation);
+			DataGeneratorManager gm = new DataGeneratorManager(em);
+			gm.apply(statement, description).evaluate();
+		}
+		
+		assertEquals("Only one configure call should happens", 1, DummyDataStateGenerator.configureCnt);
+		assertEquals("Ten create state calls should happen", 10, DummyDataStateGenerator.createStateCnt);
+		assertEquals("Ten resore state calls should happen", 10, DummyDataStateGenerator.restoreStateCnt);
 	}
 }

@@ -97,6 +97,7 @@
 				<groupId>com.lotaris.maven.rox.plugins</groupId>
 				<artifactId>rox-junit-maven-plugin</artifactId>
 				<configuration>
+					<fullStackTraces>true</fullStackTraces>
 <!--			<filters>
 						<filter>55b73b7b80bc</filter>
 					</filters> -->
@@ -112,6 +113,16 @@
 				</includes>
 			</resource>
 		</resources>
+		
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<filtering>true</filtering>
+				<includes>
+					<include>junitee.properties</include>
+				</includes>
+			</testResource>
+		</testResources>
 	</build>
 
 	<profiles>
