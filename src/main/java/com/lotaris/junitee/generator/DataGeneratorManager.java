@@ -1,15 +1,13 @@
 package com.lotaris.junitee.generator;
 
-import com.lotaris.junitee.context.ContextInjector;
-import com.lotaris.junitee.context.IContextRule;
-import com.lotaris.junitee.context.GeneratorContext;
-import com.lotaris.junitee.dao.DaoInjector;
+import com.lotaris.junitee.dependency.DependencyInjector;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import javax.persistence.EntityManager;
+import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
@@ -21,7 +19,7 @@ import org.junit.runners.model.Statement;
  * 
  * @author Laurent Prevost, laurent.prevost@lotaris.com
  */
-public class DataGeneratorManager implements IContextRule {
+public class DataGeneratorManager implements TestRule {
 	/**
 	 * Entity manager to share across all the data generators and DAOs in the factories.
 	 */
@@ -61,24 +59,23 @@ public class DataGeneratorManager implements IContextRule {
 
 	@Override
 	public Statement apply(Statement base, Description description) {
-		return apply(new GeneratorContext(), base, description);
+		return internalApply(base, description);
 	}
 
 	/**
 	 * Method to avoid problems with anonymous class and final variables otherwise
 	 * the content of this method can be put on the method apply
 	 */
-	@Override
-	public Statement apply(final GeneratorContext context, final Statement base, final Description description) {
+	public Statement internalApply(final Statement base, final Description description) {
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
-				before(context, description);
+				before(description);
 				try {
 					base.evaluate();
 				}
 				finally {
-					after(context, description);
+					after(description);
 				}
 			}
 		};
@@ -102,7 +99,7 @@ public class DataGeneratorManager implements IContextRule {
 	 * @param context The generator context
 	 * @throws Throwable Any errors 
 	 */
-	private void before(GeneratorContext context, Description description) throws DataGeneratorException {
+	private void before(Description description) throws DataGeneratorException {
 		// Clear the generators used in a previous test. Clear must be there because 
 		// there is no warranty to reach the after if a test fails.
 		dataGenerators.clear();
@@ -120,8 +117,7 @@ public class DataGeneratorManager implements IContextRule {
 				try {
 					// Instantiate a new data generator, inject the DAO and keep track of it.
 					IDataGenerator dataGenerator = dataGeneratorClass.newInstance();
-					DaoInjector.inject(dataGenerator, entityManager);
-					ContextInjector.inject(dataGenerator, context);
+					DependencyInjector.inject(dataGenerator, entityManager);
 					dataGenerators.put(dataGeneratorClass, dataGenerator);
 				}
 				catch (IllegalAccessException | InstantiationException ex) {
@@ -142,7 +138,7 @@ public class DataGeneratorManager implements IContextRule {
 			
 			entityManager.getTransaction().begin();
 			for (IDataGenerator dataGenerator : dataGenerators.values()) {
-				dataGenerator.before();
+				dataGenerator.run();
 			}
 			entityManager.getTransaction().commit();
 			entityManager.clear();
@@ -159,20 +155,11 @@ public class DataGeneratorManager implements IContextRule {
 	 * @param context The generator context
 	 * @throws Throwable Any errors 
 	 */
-	private void after(GeneratorContext context, Description description) throws DataGeneratorException {
+	private void after(Description description) throws DataGeneratorException {
 		DataGenerator dgAnnotation = description.getAnnotation(DataGenerator.class);
 		
 		if (dgAnnotation != null && dgAnnotation.executeAfter()) {
 			try {
-				// Manage a transaction and call the operation to be done after the test ends.
-				entityManager.getTransaction().begin();
-			
-				for (IDataGenerator dataGenerator : dataGenerators.values()) {
-					dataGenerator.after();
-				}
-
-				entityManager.getTransaction().commit();
-				
 				if (DataStateGeneratorHelper.hasStateGenerator()) {
 					DataStateGeneratorHelper.getStateGenerator().restoreState(entityManager);
 				}

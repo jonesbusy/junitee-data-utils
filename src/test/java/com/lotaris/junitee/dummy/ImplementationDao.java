@@ -1,6 +1,7 @@
 package com.lotaris.junitee.dummy;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 /**
  * Custom DAO to have the entity manager injected
@@ -8,5 +9,6 @@ import javax.persistence.EntityManager;
  * @author Laurent Prevost
  */
 public class ImplementationDao implements IImplementationDao {
+	@PersistenceContext
 	public EntityManager em;
 }

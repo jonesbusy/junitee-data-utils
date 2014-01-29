@@ -12,13 +12,8 @@ public class BeforeCrashGenerator implements IDataGenerator {
 	public int count = 0;
 	
 	@Override
-	public void before() {
+	public void run() {
 		count++;
 		throw new RuntimeException("Exception to validate that the after is not called.");
-	}
-
-	@Override
-	public void after() {
-		count++;
 	}
 }

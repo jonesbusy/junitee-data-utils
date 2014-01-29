@@ -9,10 +9,5 @@ public interface IDataGenerator {
 	/**
 	 * Do a processing before a test method starts.
 	 */
-	void before();
-	
-	/**
-	 * Do a processing after a test method ends.
-	 */
-	void after();
+	void run();
 }

@@ -12,12 +12,7 @@ public class DoNotCrashGenerator implements IDataGenerator {
 	public int count = 0;
 	
 	@Override
-	public void before() {
-		count++;
-	}
-
-	@Override
-	public void after() {
+	public void run() {
 		count++;
 	}
 }

@@ -1,7 +1,7 @@
 package com.lotaris.junitee.dummy;
 
-import com.lotaris.junitee.dao.DAO;
 import com.lotaris.junitee.generator.IDataGenerator;
+import javax.ejb.EJB;
 
 /**
  * Generator with complex DAO to test injections
@@ -10,14 +10,10 @@ import com.lotaris.junitee.generator.IDataGenerator;
  */
 public class GeneratorWithComplexDao implements IDataGenerator {
 
-	@DAO
+	@EJB
 	public ThirdDao thirdDao;
 	
 	@Override
-	public void after() {
-	}
-
-	@Override
-	public void before() {
+	public void run() {
 	}
 }

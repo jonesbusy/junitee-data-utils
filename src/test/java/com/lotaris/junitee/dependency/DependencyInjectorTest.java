@@ -1,4 +1,4 @@
-package com.lotaris.junitee.dao;
+package com.lotaris.junitee.dependency;
 
 import com.lotaris.junitee.dummy.ImplementationDao;
 import com.lotaris.junitee.dummy.DummyGeneratorWithDaos;
@@ -6,6 +6,7 @@ import com.lotaris.junitee.dummy.FirstDao;
 import com.lotaris.junitee.dummy.GeneratorWithComplexDao;
 import com.lotaris.junitee.dummy.GeneratorWithInheritance;
 import com.lotaris.rox.annotations.RoxableTest;
+import com.lotaris.rox.annotations.RoxableTestClass;
 import javax.persistence.EntityManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -17,7 +18,8 @@ import org.mockito.MockitoAnnotations;
 /**
  * @author Laurent Prevost, laurent.prevost@lotaris.com
  */
-public class DaoInjectorTest {
+@RoxableTestClass(tags = "dependency-injector")
+public class DependencyInjectorTest {
 	@Mock
 	private EntityManager em;
 	
@@ -31,7 +33,7 @@ public class DaoInjectorTest {
 	public void classWithImplementationDaoShouldHaveDaoInjected() {
 		DummyGeneratorWithDaos injected = new DummyGeneratorWithDaos();
 		
-		DaoInjector.inject(injected, em);
+		DependencyInjector.inject(injected, em);
 		
 		assertNotNull(injected.customDao);
 	}
@@ -41,7 +43,7 @@ public class DaoInjectorTest {
 	public void classWithInterfaceDaoShouldHaveDaoInjected() {
 		DummyGeneratorWithDaos injected = new DummyGeneratorWithDaos();
 		
-		DaoInjector.inject(injected, em);
+		DependencyInjector.inject(injected, em);
 		
 		assertNotNull(injected.iCustomDao);
 	}
@@ -51,7 +53,7 @@ public class DaoInjectorTest {
 	public void anyDaoInjectedWithEmAsEntityManagerFieldShouldHaveEmNotNull() {
 		DummyGeneratorWithDaos injected = new DummyGeneratorWithDaos();
 		
-		DaoInjector.inject(injected, em);
+		DependencyInjector.inject(injected, em);
 		
 		assertNotNull(injected.customDao.em);
 		assertNotNull(((ImplementationDao) injected.iCustomDao).em);
@@ -62,7 +64,7 @@ public class DaoInjectorTest {
 	public void generatorThatInheritsFromAnotherGeneratorShouldHaveAllTheAnnotatedFieldsInjectedAcrossInheritanceChain() {
 		GeneratorWithInheritance injected = new GeneratorWithInheritance();
 		
-		DaoInjector.inject(injected, em);
+		DependencyInjector.inject(injected, em);
 		
 		assertNotNull(injected.daoInChildClass);
 		assertNotNull(injected.daoInChildClass.em);
@@ -77,7 +79,7 @@ public class DaoInjectorTest {
 	public void generatorWithComplexDaoShouldHaveTheEntityManagerAndNestedEjbInjectedEveryWhere() {
 		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
 		
-		DaoInjector.inject(generator, em);
+		DependencyInjector.inject(generator, em);
 		
 		assertNotNull(generator.thirdDao.abstractEm);
 		assertNotNull(generator.thirdDao.thirdEm);
@@ -94,7 +96,7 @@ public class DaoInjectorTest {
 	public void generatorWithComplexDaoThatHasCyclyReferenceShouldUseTheSameInjectedObjects() {
 		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
 		
-		DaoInjector.inject(generator, em);
+		DependencyInjector.inject(generator, em);
 		
 		assertEquals(generator.thirdDao, generator.thirdDao.firstDao.thirdDao);
 	}
@@ -104,7 +106,7 @@ public class DaoInjectorTest {
 	public void onlyOneInstanceOfEjbShouldBeInstantiatedInComplexObjectGraph() {
 		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
 		
-		DaoInjector.inject(generator, em);
+		DependencyInjector.inject(generator, em);
 		
 		assertEquals(generator.thirdDao, generator.thirdDao.firstDao.thirdDao);
 		assertEquals(generator.thirdDao.firstDao, generator.thirdDao.secondDao.firstDao);

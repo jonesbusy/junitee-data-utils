@@ -1,6 +1,6 @@
 package com.lotaris.junitee.dummy;
 
-import com.lotaris.junitee.dao.DAO;
+import javax.ejb.EJB;
 
 /**
  * Data generator to check if the DAO is correctly instantiated
@@ -8,6 +8,6 @@ import com.lotaris.junitee.dao.DAO;
  * @author Laurent Prevost, laurent.prevost@lotaris.com
  */
 public class DataGeneratorWithInheritanceAndDaos extends DataGeneratorWithDao {
-	@DAO
+	@EJB
 	public IImplementationDao secondDao;
 }

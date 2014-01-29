@@ -79,43 +79,6 @@ public class DataGeneratorManagerTest {
 	}
 	
 	@Test
-	@RoxableTest(key = "3e82d8f2891e")
-	public void failingEvaluateMethodOnTestMethodShouldRunAfterWhenExecuteAfterIsTrue() throws Throwable {
-		DataGenerator annotation = new DataGenerator() {
-			@Override
-			public Class<? extends IDataGenerator>[] value() {
-				return new Class[] { DoNotCrashGenerator.class };
-			}
-
-			@Override
-			public Class<? extends Annotation> annotationType() {
-				return DataGenerator.class;
-			}
-
-			@Override
-			public boolean executeAfter() {
-				return true;
-			}
-		};
-		
-		Description description = Description.createSuiteDescription("Some description", annotation);
-		
-		when(em.getTransaction()).thenReturn(et);
-		
-		doThrow(Exception.class).when(statement).evaluate();
-		
-		DataGeneratorManager gm = new DataGeneratorManager(em);
-		
-		try {
-			gm.apply(statement, description).evaluate();
-		}
-		catch (Throwable t) { /* Do nothing with the exception to let the test do its job */ }
-		
-		// After should not be called when a test fails
-		assertEquals(2, gm.getDataGenerator(DoNotCrashGenerator.class).count);
-	}
-
-	@Test
 	@RoxableTest(key = "5baec6dfc545")
 	public void failingEvaluateMethodOnTestMethodShouldAvoidAfterToBeEvaluatedWhenExecuteAfterIsFalse() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
@@ -150,37 +113,6 @@ public class DataGeneratorManagerTest {
 		
 		// After should not be called when a test fails
 		assertEquals(1, gm.getDataGenerator(DoNotCrashGenerator.class).count);
-	}
-
-	@Test
-	@RoxableTest(key = "a4ed12539e67")
-	public void afterMethodOnGeneratorMethodShouldBeRunWhenNoFaliuresOccurInBeforeOrEvaluate() throws Throwable {
-		DataGenerator annotation = new DataGenerator() {
-			@Override
-			public Class<? extends IDataGenerator>[] value() {
-				return new Class[] { DoNotCrashGenerator.class };
-			}
-
-			@Override
-			public Class<? extends Annotation> annotationType() {
-				return DataGenerator.class;
-			}
-			
-			@Override
-			public boolean executeAfter() {
-				return true;
-			}
-		};
-		
-		Description description = Description.createSuiteDescription("Some description", annotation);
-		
-		when(em.getTransaction()).thenReturn(et);
-		
-		DataGeneratorManager gm = new DataGeneratorManager(em);
-		gm.apply(statement, description).evaluate();
-		
-		// After should be called when everything goes well
-		assertEquals(2, gm.getDataGenerator(DoNotCrashGenerator.class).count);
 	}
 
 	@Test

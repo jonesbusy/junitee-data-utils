@@ -1,6 +1,6 @@
 package com.lotaris.junitee.dummy;
 
-import com.lotaris.junitee.dao.DAO;
+import javax.ejb.EJB;
 
 /**
  * Custom data generator to have DAO injected
@@ -8,9 +8,9 @@ import com.lotaris.junitee.dao.DAO;
  * @author Laurent Prevost, laurent.prevost@lotaris.com
  */
 public class DummyGeneratorWithDaos {
-	@DAO
+	@EJB
 	public IImplementationDao iCustomDao;
 	
-	@DAO
+	@EJB
 	public ImplementationDao customDao;
 }

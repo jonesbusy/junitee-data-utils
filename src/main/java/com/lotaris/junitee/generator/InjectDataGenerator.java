@@ -1,4 +1,4 @@
-package com.lotaris.junitee.dao;
+package com.lotaris.junitee.generator;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -6,12 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * This annotation should be use to inject an entity manager to
- * the fields annotated
+ * Annotation to allow injection of data generators into
+ * other data generators.
  * 
  * @author Laurent Prevost, laurent.prevost@lotaris.com
  */
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface DAO {
+public @interface InjectDataGenerator {
 }

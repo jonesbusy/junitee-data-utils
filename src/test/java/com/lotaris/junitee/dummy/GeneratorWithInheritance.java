@@ -1,6 +1,6 @@
 package com.lotaris.junitee.dummy;
 
-import com.lotaris.junitee.dao.DAO;
+import javax.ejb.EJB;
 
 /**
  * A DAO that inherits to test if all the DAO annotated fields
@@ -9,6 +9,6 @@ import com.lotaris.junitee.dao.DAO;
  * @author Laurent Prevost, laurent.prevost@lotaris.com
  */
 public class GeneratorWithInheritance extends DummyGeneratorWithDaos {
-	@DAO
+	@EJB
 	public ImplementationDao daoInChildClass;
 }

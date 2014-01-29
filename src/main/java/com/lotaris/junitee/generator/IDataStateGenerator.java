@@ -7,7 +7,7 @@ import javax.persistence.EntityManager;
  * The data state generator has in charge to manage the data before and after
  * every other data manipulations are done.
  * 
- * The idea is to be able to get the state of the data at the begining of a test run
+ * The idea is to be able to get the state of the data at the beginning of a test run
  * and then, to be able to restore the state of the data after each test.
  * 
  * @author Laurent Prevost, laurent.prevost@lotaris.com
