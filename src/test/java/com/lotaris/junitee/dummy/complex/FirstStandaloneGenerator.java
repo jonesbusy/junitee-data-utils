@@ -9,8 +9,12 @@ import com.lotaris.junitee.generator.IDataGenerator;
 public class FirstStandaloneGenerator implements IDataGenerator {
 
 	@Override
-	public void run() {
+	public void generate() {
 	
+	}
+
+	@Override
+	public void cleanup() {
 	}
 	
 	public Object getGeneratedData() {

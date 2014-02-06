@@ -1,15 +1,14 @@
 package com.lotaris.junitee.generator;
 
 import com.lotaris.junitee.dependency.DependencyInjector;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 import javax.persistence.EntityManager;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The data generator manager keep track of factories to ensure only one data generator type 
@@ -17,9 +16,11 @@ import org.junit.runners.model.Statement;
  * 
  * This data generator manager should be used associated with a JUnit Rule mechanism.
  * 
- * @author Laurent Prevost, laurent.prevost@lotaris.com
+ * @author Laurent Prevost <laurent.prevost@lotaris.com>
  */
 public class DataGeneratorManager implements TestRule {
+	private static final Logger LOG = LoggerFactory.getLogger(DataGeneratorManager.class);
+	
 	/**
 	 * Entity manager to share across all the data generators and DAOs in the factories.
 	 */
@@ -31,30 +32,12 @@ public class DataGeneratorManager implements TestRule {
 	private Map<Class, IDataGenerator> dataGenerators = new HashMap<>();
 	
 	/**
-	 * Configuration for data generators
-	 */
-	private static final String CONFIGURATION_NAME = "/junitee.properties";
-	
-	/**
 	 * Force the construction of the data generator with an entity manager
 	 * 
 	 * @param entityManager Entity manager to use
 	 */
 	public DataGeneratorManager(EntityManager entityManager) {
 		this.entityManager = entityManager;
-		
-		// Try to load the configuration and configure the helper
-		try {
-			InputStream is = getClass().getResourceAsStream(CONFIGURATION_NAME);
-			
-			if (is != null) {
-				Properties configuration = new Properties();
-				configuration.load(is);
-				DataStateGeneratorHelper.configure(configuration);
-			}
-		}
-		catch (IOException ioe) {
-		}
 	}
 
 	@Override
@@ -70,12 +53,12 @@ public class DataGeneratorManager implements TestRule {
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
-				before(description);
 				try {
+					generate(description);
 					base.evaluate();
 				}
 				finally {
-					after(description);
+					cleanup(description);
 				}
 			}
 		};
@@ -93,13 +76,13 @@ public class DataGeneratorManager implements TestRule {
 	}
 	
 	/**
-	 * Actions to be done before a test is run
+	 * Actions to generate data
 	 * 
 	 * @param description The description to get test data
 	 * @param context The generator context
 	 * @throws Throwable Any errors 
 	 */
-	private void before(Description description) throws DataGeneratorException {
+	private void generate(Description description) throws DataGeneratorException {
 		// Clear the generators used in a previous test. Clear must be there because 
 		// there is no warranty to reach the after if a test fails.
 		dataGenerators.clear();
@@ -117,55 +100,61 @@ public class DataGeneratorManager implements TestRule {
 				try {
 					// Instantiate a new data generator, inject the DAO and keep track of it.
 					IDataGenerator dataGenerator = dataGeneratorClass.newInstance();
-					DependencyInjector.inject(dataGenerator, entityManager);
+					DependencyInjector.inject(dataGenerator, entityManager, true);
 					dataGenerators.put(dataGeneratorClass, dataGenerator);
 				}
 				catch (IllegalAccessException | InstantiationException ex) {
+					LOG.error("Injection failed during the creation of the data generator: " + dataGeneratorClass.getCanonicalName(), ex);
 					throw new DataGeneratorException("Unable to instantiate the data generator " + dataGeneratorClass.getCanonicalName(), ex);
 				}
 			}
 			else {
+				LOG.error("The data generator [" + dataGeneratorClass.getCanonicalName() + "] is already instantiated. One instance of each data generator is allowed.");
 				throw new DataGeneratorException("The data generator " + dataGeneratorClass.getCanonicalName() + " is already registered. "
 					+ "Only one instance of each generator can be specified in the annotation.");
 			}
 		}
 		
-		// Manage a transaction and call the operation to be done before the test starts.
 		try {
-			if (DataStateGeneratorHelper.hasStateGenerator()) {
-				DataStateGeneratorHelper.getStateGenerator().createState(entityManager);
-			}
-			
 			entityManager.getTransaction().begin();
 			for (IDataGenerator dataGenerator : dataGenerators.values()) {
-				dataGenerator.run();
+				dataGenerator.generate();
 			}
 			entityManager.getTransaction().commit();
-			entityManager.clear();
 		}
 		catch (Exception e) {
-			throw new DataGeneratorException("An unexpected error occured during before phase of generators.", e);
+			LOG.error("Unkown error", e);
+			throw new DataGeneratorException("An unexpected error occured during the data generation.", e);
+		}
+		finally {
+			entityManager.clear();
 		}
 	}
 
 	/**
-	 * Actions to be done after a test is run
+	 * Actions to clean the data
 	 * 
 	 * @param description The description to get test data
 	 * @param context The generator context
 	 * @throws Throwable Any errors 
 	 */
-	private void after(Description description) throws DataGeneratorException {
+	private void cleanup(Description description) throws DataGeneratorException {
 		DataGenerator dgAnnotation = description.getAnnotation(DataGenerator.class);
 		
-		if (dgAnnotation != null && dgAnnotation.executeAfter()) {
+		if (dgAnnotation != null && dgAnnotation.executeCleanup()) {
 			try {
-				if (DataStateGeneratorHelper.hasStateGenerator()) {
-					DataStateGeneratorHelper.getStateGenerator().restoreState(entityManager);
+				entityManager.getTransaction().begin();
+				for (IDataGenerator dataGenerator : dataGenerators.values()) {
+					dataGenerator.cleanup();
 				}
+				entityManager.getTransaction().commit();
 			}
 			catch (Exception e) {
-				throw new DataGeneratorException("An unexpected error occured during after phase of generators.", e);
+				LOG.error("Unknow error", e);
+				throw new DataGeneratorException("An unexpected error occured during cleanup phase.", e);
+			}
+			finally {
+				entityManager.clear();
 			}
 		}
 	}

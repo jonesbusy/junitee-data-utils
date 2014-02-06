@@ -22,8 +22,10 @@ public class ComplexDataGenerator extends CompositeDataGenerator {
 	}
 	
 	@Override
-	protected void generate() {
-		
+	protected void createData() {
 	}
 	
+	@Override 
+	protected void cleanData() {
+	}
 }

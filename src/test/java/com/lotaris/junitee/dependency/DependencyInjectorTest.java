@@ -5,6 +5,7 @@ import com.lotaris.junitee.dummy.DummyGeneratorWithDaos;
 import com.lotaris.junitee.dummy.FirstDao;
 import com.lotaris.junitee.dummy.GeneratorWithComplexDao;
 import com.lotaris.junitee.dummy.GeneratorWithInheritance;
+import com.lotaris.junitee.generator.InjectDataGenerator;
 import com.lotaris.rox.annotations.RoxableTest;
 import com.lotaris.rox.annotations.RoxableTestClass;
 import javax.persistence.EntityManager;
@@ -16,7 +17,7 @@ import static org.junit.Assert.*;
 import org.mockito.MockitoAnnotations;
 
 /**
- * @author Laurent Prevost, laurent.prevost@lotaris.com
+ * @author Laurent Prevost <laurent.prevost@lotaris.com>
  */
 @RoxableTestClass(tags = "dependency-injector")
 public class DependencyInjectorTest {
@@ -33,7 +34,7 @@ public class DependencyInjectorTest {
 	public void classWithImplementationDaoShouldHaveDaoInjected() {
 		DummyGeneratorWithDaos injected = new DummyGeneratorWithDaos();
 		
-		DependencyInjector.inject(injected, em);
+		DependencyInjector.inject(injected, em, true);
 		
 		assertNotNull(injected.customDao);
 	}
@@ -43,7 +44,7 @@ public class DependencyInjectorTest {
 	public void classWithInterfaceDaoShouldHaveDaoInjected() {
 		DummyGeneratorWithDaos injected = new DummyGeneratorWithDaos();
 		
-		DependencyInjector.inject(injected, em);
+		DependencyInjector.inject(injected, em, true);
 		
 		assertNotNull(injected.iCustomDao);
 	}
@@ -53,7 +54,7 @@ public class DependencyInjectorTest {
 	public void anyDaoInjectedWithEmAsEntityManagerFieldShouldHaveEmNotNull() {
 		DummyGeneratorWithDaos injected = new DummyGeneratorWithDaos();
 		
-		DependencyInjector.inject(injected, em);
+		DependencyInjector.inject(injected, em, true);
 		
 		assertNotNull(injected.customDao.em);
 		assertNotNull(((ImplementationDao) injected.iCustomDao).em);
@@ -64,7 +65,7 @@ public class DependencyInjectorTest {
 	public void generatorThatInheritsFromAnotherGeneratorShouldHaveAllTheAnnotatedFieldsInjectedAcrossInheritanceChain() {
 		GeneratorWithInheritance injected = new GeneratorWithInheritance();
 		
-		DependencyInjector.inject(injected, em);
+		DependencyInjector.inject(injected, em, true);
 		
 		assertNotNull(injected.daoInChildClass);
 		assertNotNull(injected.daoInChildClass.em);
@@ -79,7 +80,7 @@ public class DependencyInjectorTest {
 	public void generatorWithComplexDaoShouldHaveTheEntityManagerAndNestedEjbInjectedEveryWhere() {
 		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
 		
-		DependencyInjector.inject(generator, em);
+		DependencyInjector.inject(generator, em, true);
 		
 		assertNotNull(generator.thirdDao.abstractEm);
 		assertNotNull(generator.thirdDao.thirdEm);
@@ -96,7 +97,7 @@ public class DependencyInjectorTest {
 	public void generatorWithComplexDaoThatHasCyclyReferenceShouldUseTheSameInjectedObjects() {
 		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
 		
-		DependencyInjector.inject(generator, em);
+		DependencyInjector.inject(generator, em, true);
 		
 		assertEquals(generator.thirdDao, generator.thirdDao.firstDao.thirdDao);
 	}
@@ -106,11 +107,39 @@ public class DependencyInjectorTest {
 	public void onlyOneInstanceOfEjbShouldBeInstantiatedInComplexObjectGraph() {
 		GeneratorWithComplexDao generator = new GeneratorWithComplexDao();
 		
-		DependencyInjector.inject(generator, em);
+		DependencyInjector.inject(generator, em, true);
 		
 		assertEquals(generator.thirdDao, generator.thirdDao.firstDao.thirdDao);
 		assertEquals(generator.thirdDao.firstDao, generator.thirdDao.secondDao.firstDao);
 		assertEquals(generator.thirdDao.secondDao.firstDao, generator.thirdDao.secondDao.secondInstanceOfFirstDao);
 		assertEquals(generator.thirdDao.secondDao, generator.thirdDao.secondDao.secondDao);
+	}
+	
+	@Test
+	@RoxableTest(key = "45e85462729a")
+	public void dataGeneratorWithInternalDataGeneratorShouldBeInjectedWhenInjectorIsConfiguredForThat() {
+		OutsideDataGenerator odg = new OutsideDataGenerator();
+		
+		DependencyInjector.inject(odg, em, true);
+		
+		assertNotNull("The inside data generator should be instantiated", odg.insideDataGenerator);
+	}
+	
+	@Test
+	@RoxableTest(key = "2c22fb5f2762")
+	public void dataGeneratorWithInternalDataGeneratorShouldNotBeInjectedWhenInjectorIsNotConfiguredForThat() {
+		OutsideDataGenerator odg = new OutsideDataGenerator();
+		
+		DependencyInjector.inject(odg, em, false);
+		
+		assertNull("The inside data generator should not be instantiated", odg.insideDataGenerator);
+	}
+
+	public static class OutsideDataGenerator {
+		@InjectDataGenerator
+		private InsideDataGenerator insideDataGenerator;
+	}
+	
+	public static class InsideDataGenerator {
 	}
 }

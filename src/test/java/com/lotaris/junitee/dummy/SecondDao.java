@@ -7,7 +7,7 @@ import javax.persistence.PersistenceContext;
 /**
  * A second DAO to build a chain of DAO
  * 
- * @author Laurent Prevost, laurent.prevost@lotaris.com
+ * @author Laurent Prevost <laurent.prevost@lotaris.com>
  */
 public class SecondDao {
 	@PersistenceContext

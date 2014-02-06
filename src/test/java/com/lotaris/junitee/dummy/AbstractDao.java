@@ -7,7 +7,7 @@ import javax.persistence.PersistenceContext;
 /**
  * Abstract DAO to test injection accros all the levels
  * 
- * @author Laurent Prevost, laurent.prevost@lotaris.com
+ * @author Laurent Prevost <laurent.prevost@lotaris.com>
  */
 public class AbstractDao {
 	@PersistenceContext

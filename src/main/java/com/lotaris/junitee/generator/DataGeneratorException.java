@@ -3,7 +3,7 @@ package com.lotaris.junitee.generator;
 /**
  * Dedicated exception for the generators
  * 
- * @author Laurent Prevost, laurent.prevost@lotaris.com
+ * @author Laurent Prevost <laurent.prevost@lotaris.com>
  */
 public class DataGeneratorException extends Exception {
 	public DataGeneratorException() {}

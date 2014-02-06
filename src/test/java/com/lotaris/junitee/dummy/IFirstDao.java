@@ -5,7 +5,7 @@ package com.lotaris.junitee.dummy;
  * when no implementation is provided as the type of class
  * attribute.
  * 
- * @author Laurent Prevost, laurent.prevost@lotaris.com
+ * @author Laurent Prevost <laurent.prevost@lotaris.com>
  */
 public interface IFirstDao {
 	

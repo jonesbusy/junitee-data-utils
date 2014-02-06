@@ -186,16 +186,34 @@ public abstract class CompositeDataGenerator implements IDataGenerator {
 	 * In that method, you should have access to other generators
 	 * and the result of the data generation.
 	 */
-	protected abstract void generate();
+	protected abstract void createData();
 	
 	@Override
-	public final void run() {
+	public final void generate() {
 		setup();
 		
 		if (first  != null) {
-			first.execute();
+			first.generate();
 		}
 
-		generate();
+		createData();
+	}
+
+	/**
+	 * Generate method should be implemented to cleanup data
+	 * before all other data are cleanup.
+	 * 
+	 * In that method, you should have access to other generators
+	 * and the result of the data generation.
+	 */
+	protected abstract void cleanData();
+	
+	@Override
+	public final void cleanup() {
+		cleanData();
+		
+		if (last != null) {
+			last.cleanup();
+		}
 	}
 }

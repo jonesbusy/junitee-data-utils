@@ -18,21 +18,29 @@ public class DataGeneratorRunnerTest {
 	public void creatingAndRunningDataGeneratorRunnerWithOneDataGeneratorShouldWork() {
 		final ObjectChecker oc = new ObjectChecker();
 		
-		IDataGenerator dg = new IDataGenerator() { @Override public void run() { oc.count++; } };
+		IDataGenerator dg = new IDataGenerator() { 
+			@Override public void generate() { oc.generateCount++; } 
+			@Override public void cleanup() { oc.cleanupCount++; } 
+		};
 
 		DataGeneratorRunner dgr = new DataGeneratorRunner(dg);
 
 		assertNotNull("Data generator should be registered in the runner", dgr.getDataGenerator());
 
-		dgr.execute();
+		dgr.generate();
+		dgr.cleanup();
 		
-		assertEquals("Only one runs should be done on data generator runner", 1, oc.count);
+		assertEquals("Only one runs should be done on data generator runner", 1, oc.generateCount);
+		assertEquals("Only one runs should be done on data generator runner", 1, oc.cleanupCount);
 	}
 	
 	@Test
 	@RoxableTest(key = "c6be936166d1")
 	public void nextDataGeneratorRunnerShouldBeNullWhenCreatingDataGeneratorRunnerWithOneDataGenerator() {
-		IDataGenerator dg = new IDataGenerator() { @Override public void run() { } };
+		IDataGenerator dg = new IDataGenerator() { 
+			@Override public void generate() {} 
+			@Override public void cleanup() {}
+		};
 
 		DataGeneratorRunner dgr = new DataGeneratorRunner(dg);
 		
@@ -44,26 +52,41 @@ public class DataGeneratorRunnerTest {
 	public void creatingAndRunningDataGeneratorRunnerWithTwoDataGeneratorsShouldWork() {
 		final ObjectChecker oc = new ObjectChecker();
 		
-		IDataGenerator dg1 = new IDataGenerator() { @Override public void run() { oc.count++; } };
+		IDataGenerator dg1 = new IDataGenerator() { 
+			@Override public void generate() { oc.generateCount++; } 
+			@Override public void cleanup() { oc.cleanupCount++; } 
+		};
 
 		DataGeneratorRunner dgr1 = new DataGeneratorRunner(dg1);
 
 		assertNotNull("First data generator should be registered in the runner", dgr1.getDataGenerator());
 		
-		IDataGenerator dg2 = new IDataGenerator() { @Override public void run() { oc.count++; } };
+		IDataGenerator dg2 = new IDataGenerator() { 
+			@Override public void generate() { oc.generateCount++; } 
+			@Override public void cleanup() { oc.cleanupCount++; } 
+		};
 		
 		DataGeneratorRunner dgr2 = dgr1.setNext(dg2);
 		
 		assertNotNull("Second data generator should be registered in the runner", dgr2);
 		assertNotEquals("Second data generator runner should not be the same as the first one", dgr1, dgr2);
 
-		dgr2.execute();
+		dgr2.generate();
 		
-		assertEquals("Running the second generator runner should only run the second generator", 1, oc.count);
+		assertEquals("Generate on the second generator runner should only run the second generator", 1, oc.generateCount);
 		
-		dgr1.execute();
+		dgr1.generate();
+
+		assertEquals("Generate on the first generator runner should run all the generators", 3, oc.generateCount);
+
+		dgr1.cleanup();
 		
-		assertEquals("Running the first generator runner should run all the generators", 3, oc.count);
+		assertEquals("Cleanup on the first generator runner should only run first generator", 1, oc.cleanupCount);
+
+		dgr2.cleanup();
+
+		assertEquals("Cleanup on the second generator runner should run all the geenrators", 3, oc.cleanupCount);
+		
 	}
 	
 	@Test
@@ -71,9 +94,18 @@ public class DataGeneratorRunnerTest {
 	public void creatingDataGeneratorRunnerChainShouldKeepTheCorrectOrderInDataStructureAndRun() {
 		final ObjectChecker oc = new ObjectChecker();
 		
-		IDataGenerator dg1 = new IDataGenerator() { @Override public void run() { oc.stringChecker += "+dg1"; } };
-		IDataGenerator dg2 = new IDataGenerator() { @Override public void run() { oc.stringChecker += "+dg2"; } };
-		IDataGenerator dg3 = new IDataGenerator() { @Override public void run() { oc.stringChecker += "+dg3"; } };
+		IDataGenerator dg1 = new IDataGenerator() { 
+			@Override public void generate() { oc.stringChecker += "+dg1g"; } 
+			@Override public void cleanup() { oc.stringChecker += "+dg1c"; } 
+		};
+		IDataGenerator dg2 = new IDataGenerator() { 
+			@Override public void generate() { oc.stringChecker += "+dg2g"; } 
+			@Override public void cleanup() { oc.stringChecker += "+dg2c"; } 
+		};
+		IDataGenerator dg3 = new IDataGenerator() { 
+			@Override public void generate() { oc.stringChecker += "+dg3g"; } 
+			@Override public void cleanup() { oc.stringChecker += "+dg3c"; } 
+		};
 
 		DataGeneratorRunner dgr = new DataGeneratorRunner(dg1);
 
@@ -84,13 +116,19 @@ public class DataGeneratorRunnerTest {
 		assertEquals("Third data generator should be dg3", dg3, dgr.getNext().getNext().getDataGenerator());
 		assertNull("No forth data generator should be present", dgr.getNext().getNext().getNext());
 		
-		dgr.execute();
+		assertEquals("Datagenerator before dg3 should be dg2", dg2, dgr.getNext().getNext().getPrevious().getDataGenerator());
+		assertEquals("Datagenerator before dg2 should be dg1", dg1, dgr.getNext().getNext().getPrevious().getPrevious().getDataGenerator());
+		assertNull("There is no dataganerator before dg1", dgr.getNext().getNext().getPrevious().getPrevious().getPrevious());
+
+		dgr.generate();
+		dgr.getNext().getNext().cleanup();
 		
-		assertEquals("Executing data generator runner should respect the order", "+dg1+dg2+dg3", oc.stringChecker);
+		assertEquals("Executing data generator runner should respect the order", "+dg1g+dg2g+dg3g+dg3c+dg2c+dg1c", oc.stringChecker);
 	}
 	
 	private static class ObjectChecker {
-		private int count = 0;
+		private int generateCount = 0;
+		private int cleanupCount = 0;
 		private String stringChecker = "";
 	}
 }

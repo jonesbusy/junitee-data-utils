@@ -13,7 +13,7 @@ import javax.persistence.PersistenceContext;
 /**
  * Utility class to inject objects correctly into an object
  * 
- * @author Laurent Prevost, laurent.prevost@lotaris.com
+ * @author Laurent Prevost <laurent.prevost@lotaris.com>
  */
 public class DependencyInjector {
 	private DependencyInjector() {}
@@ -25,10 +25,11 @@ public class DependencyInjector {
 	 * During the injection, new instances of DAO are created
 	 * 
 	 * @param obj The object to get all the fields that must be injected
-	 * @param em 
+	 * @param em Entity manager to inject across all the object graph
+	 * @param injectGenerators Define if the data generators must be injected or not
 	 */
-	public static void inject(Object obj, EntityManager em) {
-		inject(obj.getClass(), obj, em, new HashMap<String, Object>(), new HashSet<String>(), obj.getClass().getSimpleName());
+	public static void inject(Object obj, EntityManager em, boolean injectGenerators) {
+		inject(obj.getClass(), obj, em, new HashMap<String, Object>(), new HashSet<String>(), obj.getClass().getSimpleName(), injectGenerators);
 	}
 	
 	/**
@@ -50,11 +51,12 @@ public class DependencyInjector {
 	 * @param ejbRegistry The registry of EJB to ensure there is no two instances of the same EJB
 	 * @param dgRegistry The data generator to ensure there is no two instances of data generator for a same path
 	 * @param path The path where the injection occur to be able to determine if a circular dependency injection is detected
+	 * @param injectGenerators Define if the data generators must be injected or not
 	 */
-	private static void inject(Class cl, Object obj, EntityManager em, Map<String, Object> ejbRegistry, Set<String> dgRegistry, String path) {
+	private static void inject(Class cl, Object obj, EntityManager em, Map<String, Object> ejbRegistry, Set<String> dgRegistry, String path, boolean injectGenerators) {
 		// Inject in the super class fields if any
 		if (cl.getSuperclass() != Object.class) {
-			inject(cl.getSuperclass(), cl.getSuperclass().cast(obj), em, ejbRegistry, dgRegistry, path);
+			inject(cl.getSuperclass(), cl.getSuperclass().cast(obj), em, ejbRegistry, dgRegistry, path, injectGenerators);
 		}
 		
 		// Get all the declared fields
@@ -69,7 +71,7 @@ public class DependencyInjector {
 					} 
 					
 					// Manage the DG instantiation
-					else if (declaredField.isAnnotationPresent(InjectDataGenerator.class)) {
+					else if (injectGenerators && declaredField.isAnnotationPresent(InjectDataGenerator.class)) {
 						declaredFieldObjectInstantiated = DependencyInjectorHelper.instantiateDataGenerator(declaredField, path, dgRegistry);
 					} 
 					
@@ -81,7 +83,7 @@ public class DependencyInjector {
 					// Inject the field and do the injections into it
 					if (declaredFieldObjectInstantiated != null) {
 						DependencyInjectorHelper.injectField(declaredField, obj, declaredFieldObjectInstantiated);
-						inject(declaredFieldObjectInstantiated.getClass()	, declaredFieldObjectInstantiated, em, ejbRegistry, dgRegistry, path + "." + declaredField.getName());
+						inject(declaredFieldObjectInstantiated.getClass()	, declaredFieldObjectInstantiated, em, ejbRegistry, dgRegistry, path + "." + declaredField.getName(), injectGenerators);
 					}
 				}
 			}

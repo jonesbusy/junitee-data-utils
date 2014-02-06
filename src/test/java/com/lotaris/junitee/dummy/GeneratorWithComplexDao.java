@@ -14,6 +14,10 @@ public class GeneratorWithComplexDao implements IDataGenerator {
 	public ThirdDao thirdDao;
 	
 	@Override
-	public void run() {
+	public void generate() {
+	}
+	
+	@Override
+	public void cleanup() {
 	}
 }

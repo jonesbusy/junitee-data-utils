@@ -7,7 +7,7 @@ import javax.persistence.PersistenceContext;
 /**
  * Inherits from abstract DAO to test hierarchical injections
  * 
- * @author Laurent Prevost, laurent.prevost@lotaris.com
+ * @author Laurent Prevost <laurent.prevost@lotaris.com>
  */
 public class ThirdDao extends AbstractDao {
 	@PersistenceContext

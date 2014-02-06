@@ -14,9 +14,14 @@ class DataGeneratorRunner {
 	private IDataGenerator dataGenerator;
 	
 	/**
-	 * Next runner, should be null when the end of the chain is reached
+	 * Next runner should be null when the end of the chain is reached
 	 */
 	private DataGeneratorRunner next;
+	
+	/**
+	 * Previous runner should be null when start of the chain is reached
+	 */
+	private DataGeneratorRunner previous;
 
 	/**
 	 * Constructor
@@ -35,6 +40,7 @@ class DataGeneratorRunner {
 	 */
 	public DataGeneratorRunner setNext(IDataGenerator nextDataGenerator) {
 		next = new DataGeneratorRunner(nextDataGenerator);
+		next.previous = this;
 		return next;
 	}
 	
@@ -46,6 +52,13 @@ class DataGeneratorRunner {
 	}
 
 	/**
+	 * @return The previous data generator runner
+	 */
+	DataGeneratorRunner getPrevious() {
+		return previous;
+	}
+	
+	/**
 	 * @return The data generator to be run
 	 */
 	IDataGenerator getDataGenerator() {
@@ -53,14 +66,24 @@ class DataGeneratorRunner {
 	}
 	
 	/**
-	 * Execute the data generator runner and call
-	 * the whole composite chain
+	 * Run the creation of the data
 	 */
-	public void execute() {
-		dataGenerator.run();
+	public void generate() {
+		dataGenerator.generate();
 
 		if (next != null) {
-			next.execute();
+			next.generate();
+		}
+	}
+	
+	/**
+	 * Run the cleanup of the data
+	 */
+	public void cleanup() {
+		dataGenerator.cleanup();
+		
+		if (previous != null) {
+			previous.cleanup();
 		}
 	}
 }

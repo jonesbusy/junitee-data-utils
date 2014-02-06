@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
  * Annotation to allow injection of data generators into
  * other data generators.
  * 
- * @author Laurent Prevost, laurent.prevost@lotaris.com
+ * @author Laurent Prevost <laurent.prevost@lotaris.com>
  */
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
