@@ -7,6 +7,7 @@ import com.lotaris.rox.annotations.RoxableTest;
 import com.lotaris.rox.annotations.RoxableTestClass;
 import java.lang.annotation.Annotation;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.Description;
@@ -25,15 +26,16 @@ public class FinderManagerTest {
 	@Mock
 	private Statement statement;
 	
-	@Mock
-	private EntityManager em;
+	@Mock EntityManagerFactory entityManagerFactory;
 	
-//	@Mock
-//	private EntityTransaction et;
+	@Mock
+	private EntityManager entityManager;
 	
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
+		
+		when(entityManagerFactory.createEntityManager()).thenReturn(entityManager);
 	}
 
 	@Test
@@ -53,8 +55,7 @@ public class FinderManagerTest {
 		
 		Description description = Description.createSuiteDescription("Some description", annotation);
 		
-//		when(em.getTransaction()).thenReturn(et);
-		FinderManager fm = new FinderManager(em);
+		FinderManager fm = new FinderManager(entityManagerFactory);
 		fm.apply(statement, description).evaluate();
 
 		assertNotNull(fm.getFinder(DummyFinder.class));
@@ -75,10 +76,8 @@ public class FinderManagerTest {
 			}
 		};
 		
-//		when(em.getTransaction()).thenReturn(et);
-
 		Description description = Description.createSuiteDescription("Some description", annotation);
-		FinderManager fm = new FinderManager(em);
+		FinderManager fm = new FinderManager(entityManagerFactory);
 		
 		try {
 			fm.apply(statement, description).evaluate();
@@ -102,10 +101,8 @@ public class FinderManagerTest {
 			}
 		};
 		
-//		when(em.getTransaction()).thenReturn(et);
-
 		Description description = Description.createSuiteDescription("Some description", annotation);
-		FinderManager fm = new FinderManager(em);
+		FinderManager fm = new FinderManager(entityManagerFactory);
 		fm.apply(statement, description).evaluate();
 
 		assertNull(fm.getFinder(FinderWithDao.class).customDao);
@@ -133,10 +130,8 @@ public class FinderManagerTest {
 			}
 		};
 		
-//		when(em.getTransaction()).thenReturn(et);
-
 		Description description = Description.createSuiteDescription("Some description", annotation);
-		FinderManager fm = new FinderManager(em);
+		FinderManager fm = new FinderManager(entityManagerFactory);
 		fm.apply(statement, description).evaluate();
 
 		assertNotNull(fm.getFinder(FinderWithInheritanceAndDaos.class));

@@ -7,6 +7,7 @@ import com.lotaris.junitee.dummy.DoNotCrashGenerator;
 import com.lotaris.rox.annotations.RoxableTest;
 import java.lang.annotation.Annotation;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,14 +27,20 @@ public class DataGeneratorManagerTest {
 	private Statement statement;
 	
 	@Mock
-	private EntityManager em;
+	private EntityManagerFactory entityManagerFactory;
 	
 	@Mock
-	private EntityTransaction et;
+	private EntityManager entityManager;
+	
+	@Mock
+	private EntityTransaction entityTransaction;
 	
 	@Before
 	public void setup() {
 		MockitoAnnotations.initMocks(this);
+
+		when(entityManagerFactory.createEntityManager()).thenReturn(entityManager);
+		when(entityManager.getTransaction()).thenReturn(entityTransaction);
 	}
 
 	@Test
@@ -58,11 +65,9 @@ public class DataGeneratorManagerTest {
 		
 		Description description = Description.createSuiteDescription("Some description", annotation);
 		
-		when(em.getTransaction()).thenReturn(et);
-		
 		doThrow(Exception.class).when(statement).evaluate();
 		
-		DataGeneratorManager gm = new DataGeneratorManager(em);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
 		
 		try {
 			gm.apply(statement, description).evaluate();
@@ -98,11 +103,9 @@ public class DataGeneratorManagerTest {
 		
 		Description description = Description.createSuiteDescription("Some description", annotation);
 		
-		when(em.getTransaction()).thenReturn(et);
-		
 		doThrow(Exception.class).when(statement).evaluate();
 		
-		DataGeneratorManager gm = new DataGeneratorManager(em);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
 		
 		try {
 			gm.apply(statement, description).evaluate();
@@ -135,8 +138,7 @@ public class DataGeneratorManagerTest {
 		
 		Description description = Description.createSuiteDescription("Some description", annotation);
 		
-		when(em.getTransaction()).thenReturn(et);
-		DataGeneratorManager gm = new DataGeneratorManager(em);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
 		gm.apply(statement, description).evaluate();
 
 		assertNotNull(gm.getDataGenerator(DoNotCrashGenerator.class));
@@ -162,10 +164,8 @@ public class DataGeneratorManagerTest {
 			}
 		};
 		
-		when(em.getTransaction()).thenReturn(et);
-
 		Description description = Description.createSuiteDescription("Some description", annotation);
-		DataGeneratorManager gm = new DataGeneratorManager(em);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
 		
 		try {
 			gm.apply(statement, description).evaluate();
@@ -194,10 +194,8 @@ public class DataGeneratorManagerTest {
 			}
 		};
 		
-		when(em.getTransaction()).thenReturn(et);
-
 		Description description = Description.createSuiteDescription("Some description", annotation);
-		DataGeneratorManager gm = new DataGeneratorManager(em);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
 		gm.apply(statement, description).evaluate();
 
 		assertNotNull(gm.getDataGenerator(DataGeneratorWithDao.class).firstDao);
@@ -223,10 +221,8 @@ public class DataGeneratorManagerTest {
 			}
 		};
 		
-		when(em.getTransaction()).thenReturn(et);
-
 		Description description = Description.createSuiteDescription("Some description", annotation);
-		DataGeneratorManager gm = new DataGeneratorManager(em);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
 		gm.apply(statement, description).evaluate();
 
 		assertNotNull(gm.getDataGenerator(DataGeneratorWithInheritanceAndDaos.class).firstDao);

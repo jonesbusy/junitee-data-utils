@@ -4,6 +4,7 @@ import com.lotaris.junitee.dependency.DependencyInjector;
 import java.util.HashMap;
 import java.util.Map;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -22,9 +23,9 @@ public class DataGeneratorManager implements TestRule {
 	private static final Logger LOG = LoggerFactory.getLogger(DataGeneratorManager.class);
 	
 	/**
-	 * Entity manager to share across all the data generators and DAOs in the factories.
+	 * Entity manager factory to generate new entity manager to share between generators for a same test
 	 */
-	private EntityManager entityManager;
+	private EntityManagerFactory entityManagerFactory;
 
 	/**
 	 * Keep track of factories to be able to retrieve a data generator directly in a test
@@ -34,31 +35,24 @@ public class DataGeneratorManager implements TestRule {
 	/**
 	 * Force the construction of the data generator with an entity manager
 	 * 
-	 * @param entityManager Entity manager to use
+	 * @param entityManagerFactory Entity manager factory to create new entity managers
 	 */
-	public DataGeneratorManager(EntityManager entityManager) {
-		this.entityManager = entityManager;
+	public DataGeneratorManager(EntityManagerFactory entityManagerFactory) {
+		this.entityManagerFactory = entityManagerFactory;
 	}
 
 	@Override
-	public Statement apply(Statement base, Description description) {
-		return internalApply(base, description);
-	}
-
-	/**
-	 * Method to avoid problems with anonymous class and final variables otherwise
-	 * the content of this method can be put on the method apply
-	 */
-	public Statement internalApply(final Statement base, final Description description) {
+	public Statement apply(final Statement base, final Description description) {
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
+				EntityManager entityManager = entityManagerFactory.createEntityManager();
 				try {
-					generate(description);
+					generate(description, entityManager);
 					base.evaluate();
 				}
 				finally {
-					cleanup(description);
+					cleanup(description, entityManager);
 				}
 			}
 		};
@@ -79,10 +73,10 @@ public class DataGeneratorManager implements TestRule {
 	 * Actions to generate data
 	 * 
 	 * @param description The description to get test data
-	 * @param context The generator context
+	 * @param entityManager The entity manager
 	 * @throws Throwable Any errors 
 	 */
-	private void generate(Description description) throws DataGeneratorException {
+	private void generate(Description description, EntityManager entityManager) throws DataGeneratorException {
 		// Clear the generators used in a previous test. Clear must be there because 
 		// there is no warranty to reach the after if a test fails.
 		dataGenerators.clear();
@@ -124,6 +118,7 @@ public class DataGeneratorManager implements TestRule {
 		}
 		catch (Exception e) {
 			LOG.error("Unkown error", e);
+			entityManager.getTransaction().rollback();
 			throw new DataGeneratorException("An unexpected error occured during the data generation.", e);
 		}
 		finally {
@@ -135,10 +130,10 @@ public class DataGeneratorManager implements TestRule {
 	 * Actions to clean the data
 	 * 
 	 * @param description The description to get test data
-	 * @param context The generator context
+	 * @param entityManager The entity manager
 	 * @throws Throwable Any errors 
 	 */
-	private void cleanup(Description description) throws DataGeneratorException {
+	private void cleanup(Description description, EntityManager entityManager) throws DataGeneratorException {
 		DataGenerator dgAnnotation = description.getAnnotation(DataGenerator.class);
 		
 		if (dgAnnotation != null && dgAnnotation.executeCleanup()) {
@@ -151,6 +146,7 @@ public class DataGeneratorManager implements TestRule {
 			}
 			catch (Exception e) {
 				LOG.error("Unknow error", e);
+				entityManager.getTransaction().rollback();
 				throw new DataGeneratorException("An unexpected error occured during cleanup phase.", e);
 			}
 			finally {

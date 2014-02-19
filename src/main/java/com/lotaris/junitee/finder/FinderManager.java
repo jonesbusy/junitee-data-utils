@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -27,9 +28,9 @@ public class FinderManager implements TestRule {
 	private static final Logger LOG = LoggerFactory.getLogger(DataGeneratorManager.class);
 	
 	/**
-	 * Entity manager to share across all the data generators and DAOs in the factories.
+	 * Entity manager factory to create new entity managers
 	 */
-	private EntityManager entityManager;
+	private EntityManagerFactory entityManagerFactory;
 
 	/**
 	 * Keep track of the finders
@@ -39,10 +40,10 @@ public class FinderManager implements TestRule {
 	/**
 	 * Force the construction of the data generator with an entity manager
 	 * 
-	 * @param entityManager Entity manager to use
+	 * @param entityManagerFactory Entity manager factory to use
 	 */
-	public FinderManager(EntityManager entityManager) {
-		this.entityManager = entityManager;
+	public FinderManager(EntityManagerFactory entityManagerFactory) {
+		this.entityManagerFactory = entityManagerFactory;
 	}
 
 	@Override
@@ -92,6 +93,8 @@ public class FinderManager implements TestRule {
 		if (finderAnnotation == null) {
 			return;
 		}
+		
+		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		
 		// Retrieve all the data generators defined for the test method.
 		for (Class<? extends IFinder> finderClass : finderAnnotation.value()) {
