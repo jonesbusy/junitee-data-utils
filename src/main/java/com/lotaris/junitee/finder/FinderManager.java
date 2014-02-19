@@ -94,6 +94,7 @@ public class FinderManager implements TestRule {
 			return;
 		}
 		
+		// Create the entity manager from the factory. One entity manager is created by test executed.
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		
 		// Retrieve all the data generators defined for the test method.

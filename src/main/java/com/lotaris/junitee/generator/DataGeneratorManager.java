@@ -46,7 +46,9 @@ public class DataGeneratorManager implements TestRule {
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
+				// Create an entity manager to share between the before and after phase
 				EntityManager entityManager = entityManagerFactory.createEntityManager();
+				
 				try {
 					generate(description, entityManager);
 					base.evaluate();
