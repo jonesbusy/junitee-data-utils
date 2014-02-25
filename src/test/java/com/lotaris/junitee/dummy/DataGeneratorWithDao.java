@@ -19,4 +19,13 @@ public class DataGeneratorWithDao implements IDataGenerator {
 	@Override
 	public void cleanup() {
 	}
+	
+	public void createSomething() {}
+	public Object createSomethingElse() { return new Object(); }
+
+	public void deleteSomething() {}
+	public Object deleteSomethingElse() { return new Object(); }
+
+	public void updateSomething() {}
+	public Object updateSomethingElse() { return new Object(); }
 }

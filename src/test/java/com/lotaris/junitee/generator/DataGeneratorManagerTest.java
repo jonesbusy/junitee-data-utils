@@ -228,4 +228,112 @@ public class DataGeneratorManagerTest {
 		assertNotNull(gm.getDataGenerator(DataGeneratorWithInheritanceAndDaos.class).firstDao);
 		assertNotNull(gm.getDataGenerator(DataGeneratorWithInheritanceAndDaos.class).secondDao);
 	}
+	
+	@Test
+	@RoxableTest(key = "147fc8668303")
+	public void callingCreateMethodsShouldBeWrappedIntoTransaction() throws Throwable {
+		DataGenerator annotation = new DataGenerator() {
+			@Override
+			public Class<? extends IDataGenerator>[] value() {
+				return new Class[] { DataGeneratorWithDao.class };
+			}
+
+			@Override
+			public Class<? extends Annotation> annotationType() {
+				return DataGenerator.class;
+			}
+
+			@Override
+			public boolean executeCleanup() {
+				return true;
+			}
+		};
+		
+		Description description = Description.createSuiteDescription("Some description", annotation);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
+
+		// Evaluate will call two times begin() and commit() for the generate/cleanup data of the data generator
+		gm.apply(statement, description).evaluate();
+		
+		gm.getDataGenerator(DataGeneratorWithDao.class).createSomething();
+		verify(entityTransaction, times(3)).begin();
+		verify(entityTransaction, times(3)).commit();
+		
+		Object obj = gm.getDataGenerator(DataGeneratorWithDao.class).createSomethingElse();
+		assertNotNull(obj);
+		verify(entityTransaction, times(4)).begin();
+		verify(entityTransaction, times(4)).commit();
+	}
+
+	@Test
+	@RoxableTest(key = "238e7a9ebb8a")
+	public void callingDeleteMethodsShouldBeWrappedIntoTransaction() throws Throwable {
+		DataGenerator annotation = new DataGenerator() {
+			@Override
+			public Class<? extends IDataGenerator>[] value() {
+				return new Class[] { DataGeneratorWithDao.class };
+			}
+
+			@Override
+			public Class<? extends Annotation> annotationType() {
+				return DataGenerator.class;
+			}
+
+			@Override
+			public boolean executeCleanup() {
+				return true;
+			}
+		};
+		
+		Description description = Description.createSuiteDescription("Some description", annotation);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
+
+		// Evaluate will call two times begin() and commit() for the generate/cleanup data of the data generator
+		gm.apply(statement, description).evaluate();
+	
+		gm.getDataGenerator(DataGeneratorWithDao.class).deleteSomething();
+		verify(entityTransaction, times(3)).begin();
+		verify(entityTransaction, times(3)).commit();
+		
+		Object obj = gm.getDataGenerator(DataGeneratorWithDao.class).deleteSomethingElse();
+		assertNotNull(obj);
+		verify(entityTransaction, times(4)).begin();
+		verify(entityTransaction, times(4)).commit();
+	}
+
+	@Test
+	@RoxableTest(key = "c5113083fadf")
+	public void callingUpdateMethodsShouldBeWrappedIntoTransaction() throws Throwable {
+		DataGenerator annotation = new DataGenerator() {
+			@Override
+			public Class<? extends IDataGenerator>[] value() {
+				return new Class[] { DataGeneratorWithDao.class };
+			}
+
+			@Override
+			public Class<? extends Annotation> annotationType() {
+				return DataGenerator.class;
+			}
+
+			@Override
+			public boolean executeCleanup() {
+				return true;
+			}
+		};
+		
+		Description description = Description.createSuiteDescription("Some description", annotation);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
+		
+		// Evaluate will call two times begin() and commit() for the generate/cleanup data of the data generator
+		gm.apply(statement, description).evaluate();
+		
+		gm.getDataGenerator(DataGeneratorWithDao.class).updateSomething();
+		verify(entityTransaction, times(3)).begin();
+		verify(entityTransaction, times(3)).commit();
+		
+		Object obj = gm.getDataGenerator(DataGeneratorWithDao.class).updateSomethingElse();
+		assertNotNull(obj);
+		verify(entityTransaction, times(4)).begin();
+		verify(entityTransaction, times(4)).commit();
+	}
 }

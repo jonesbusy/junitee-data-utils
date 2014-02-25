@@ -1,10 +1,14 @@
 package com.lotaris.junitee.generator;
 
 import com.lotaris.junitee.dependency.DependencyInjector;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import net.sf.cglib.proxy.Enhancer;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
@@ -26,7 +30,7 @@ public class DataGeneratorManager implements TestRule {
 	 * Entity manager factory to generate new entity manager to share between generators for a same test
 	 */
 	private EntityManagerFactory entityManagerFactory;
-
+	
 	/**
 	 * Keep track of factories to be able to retrieve a data generator directly in a test
 	 */
@@ -68,7 +72,14 @@ public class DataGeneratorManager implements TestRule {
 	 * @return The data generator found, null otherwise
 	 */
 	public <T extends IDataGenerator> T getDataGenerator(Class<T> dataGeneratorClass) {
-		return (T) dataGenerators.get(dataGeneratorClass);
+		// Check if the data generator exists
+		if (dataGenerators.containsKey(dataGeneratorClass)) {
+			return (T) dataGenerators.get(dataGeneratorClass);
+		}
+		// Unknown data generator
+		else {
+			throw new RuntimeException(new DataGeneratorException("The data generator " + dataGeneratorClass.getCanonicalName() + " is not present in the annotation."));
+		}
 	}
 	
 	/**
@@ -94,12 +105,17 @@ public class DataGeneratorManager implements TestRule {
 			// Check if the data generator is already instantiated.
 			if (!dataGenerators.containsKey(dataGeneratorClass)) {
 				try {
-					// Instantiate a new data generator, inject the DAO and keep track of it.
-					IDataGenerator dataGenerator = dataGeneratorClass.newInstance();
+					// Instantiate a new data generator proxy, inject the EJB and keep track of it.
+					IDataGenerator dataGenerator = (IDataGenerator) Enhancer.create(
+						dataGeneratorClass, 
+						new Class[] {IDataGenerator.class}, 
+						new GeneratorCallback(entityManager)
+					);
+					
 					DependencyInjector.inject(dataGenerator, entityManager, true);
 					dataGenerators.put(dataGeneratorClass, dataGenerator);
 				}
-				catch (IllegalAccessException | InstantiationException ex) {
+				catch (Exception ex) {
 					LOG.error("Injection failed during the creation of the data generator: " + dataGeneratorClass.getCanonicalName(), ex);
 					throw new DataGeneratorException("Unable to instantiate the data generator " + dataGeneratorClass.getCanonicalName(), ex);
 				}
@@ -153,6 +169,50 @@ public class DataGeneratorManager implements TestRule {
 			}
 			finally {
 				entityManager.clear();
+			}
+		}
+	}
+	
+	/**
+	 * Callback class to allow lazy instantiation of annotated fields
+	 */
+	private static class GeneratorCallback implements MethodInterceptor {
+		/**
+		 * Entity manager to manage the transactions
+		 */
+		private EntityManager entityManager;
+		
+		/**
+		 * Constructor
+		 * 
+		 * @param entityManager Entity manager
+		 * @param proxiedGenerator The generator to proxy
+		 */
+		public GeneratorCallback(EntityManager entityManager) {
+			this.entityManager = entityManager;
+		}
+		
+		@Override
+		public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
+			// Invoke create/update/delete methods encapsulated into a transaction
+			if (method.getName().startsWith("create") || method.getName().startsWith("update") || method.getName().startsWith("delete")) {
+				try {
+					entityManager.getTransaction().begin();
+					Object result = proxy.invokeSuper(obj, args);
+					entityManager.getTransaction().commit();
+					return result;
+				}
+				catch (Throwable t) {
+					if (entityManager.getTransaction().isActive()) {
+						entityManager.getTransaction().rollback();
+					}
+					throw t;
+				}
+			}
+
+			// Invoke any other method directly
+			else {
+				return proxy.invokeSuper(obj, args);
 			}
 		}
 	}
