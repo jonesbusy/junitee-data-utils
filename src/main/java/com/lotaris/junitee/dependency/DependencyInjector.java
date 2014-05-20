@@ -29,7 +29,7 @@ public class DependencyInjector {
 	 * @param injectGenerators Define if the data generators must be injected or not
 	 */
 	public static void inject(Object obj, EntityManager em, boolean injectGenerators) {
-		inject(obj.getClass(), obj, em, new HashMap<String, Object>(), new HashSet<String>(), obj.getClass().getSimpleName(), injectGenerators);
+		inject(obj.getClass(), obj, em, new HashMap<String, Object>(), new HashMap<String, Object>(), new HashSet<String>(), obj.getClass().getSimpleName(), injectGenerators);
 	}
 	
 	/**
@@ -53,10 +53,10 @@ public class DependencyInjector {
 	 * @param path The path where the injection occur to be able to determine if a circular dependency injection is detected
 	 * @param injectGenerators Define if the data generators must be injected or not
 	 */
-	private static void inject(Class cl, Object obj, EntityManager em, Map<String, Object> ejbRegistry, Set<String> dgRegistry, String path, boolean injectGenerators) {
+	private static void inject(Class cl, Object obj, EntityManager em, Map<String, Object> mockRegistry, Map<String, Object> ejbRegistry, Set<String> dgRegistry, String path, boolean injectGenerators) {
 		// Inject in the super class fields if any
 		if (cl.getSuperclass() != Object.class) {
-			inject(cl.getSuperclass(), cl.getSuperclass().cast(obj), em, ejbRegistry, dgRegistry, path, injectGenerators);
+			inject(cl.getSuperclass(), cl.getSuperclass().cast(obj), em, mockRegistry, ejbRegistry, dgRegistry, path, injectGenerators);
 		}
 		
 		// Get all the declared fields
@@ -65,9 +65,16 @@ public class DependencyInjector {
 				if (DependencyInjectorHelper.isNull(declaredField, obj)) {
 					Object declaredFieldObjectInstantiated = null;
 					
+					// Register the possible mocks to use during the chaing invocation
+					if (declaredField.getAnnotation(Mockable.class) != null) {
+						for (Class mockClass : declaredField.getAnnotation(Mockable.class).value()) {
+							DependencyInjectorHelper.instantiateMock(mockClass, mockRegistry);
+						}
+					}
+					
 					// Manage the EJB instantiation
 					if (declaredField.getAnnotation(EJB.class) != null) {
-						declaredFieldObjectInstantiated = DependencyInjectorHelper.instantiateEjb(declaredField, ejbRegistry);
+						declaredFieldObjectInstantiated = DependencyInjectorHelper.instantiateEjb(declaredField, mockRegistry, ejbRegistry);
 					} 
 					
 					// Manage the DG instantiation
@@ -83,7 +90,7 @@ public class DependencyInjector {
 					// Inject the field and do the injections into it
 					if (declaredFieldObjectInstantiated != null) {
 						DependencyInjectorHelper.injectField(declaredField, obj, declaredFieldObjectInstantiated);
-						inject(declaredFieldObjectInstantiated.getClass()	, declaredFieldObjectInstantiated, em, ejbRegistry, dgRegistry, path + "." + declaredField.getName(), injectGenerators);
+						inject(declaredFieldObjectInstantiated.getClass()	, declaredFieldObjectInstantiated, em, mockRegistry, ejbRegistry, dgRegistry, path + "." + declaredField.getName(), injectGenerators);
 					}
 				}
 			}

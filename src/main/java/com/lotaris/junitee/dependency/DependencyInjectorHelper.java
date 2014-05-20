@@ -3,8 +3,13 @@ package com.lotaris.junitee.dependency;
 import com.lotaris.junitee.utils.InflectorHelper;
 import com.lotaris.junitee.utils.NoValidClassException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.PostConstruct;
+import javax.ejb.Local;
+import javax.ejb.Remote;
 
 /**
  * Dependency injector helper offers method to facilitate the injections
@@ -65,14 +70,66 @@ public class DependencyInjectorHelper {
 	}
 	
 	/**
+	 * Get the interface for which the mock should be used
+	 * 
+	 * @param mockClass The mock class for which the investigation must be done
+	 * @return The interface which is annotated with @Local or @Remote
+	 */
+	static Class getMockInterface(Class mockClass) {
+		Class current = mockClass;
+		
+		do {
+			// Check each interface to see if there is an interface which elegible to be mocked
+			for (Class interfaceClass : current.getInterfaces()) {
+				if (interfaceClass.getAnnotation(Local.class) != null || interfaceClass.getAnnotation(Remote.class) != null) {
+					return interfaceClass;
+				}
+			}
+			current = current.getSuperclass();
+		} while (current != Object.class);
+		
+		return null;
+	}
+	
+	/**
+	 * Instantiate a new Mock instance of a class
+	 * 
+	 * @param mockClass The class of the mock
+	 * @param mockRegistry The mock registry to get a singleton mock
+	 * @return The mock instantiated or get from the cache
+	 * @throws DependencyInjectionException  Any error during the mock instantiation
+	 */
+	static Object instantiateMock(Class mockClass, Map<String, Object> mockRegistry) throws DependencyInjectionException {
+		Class mockInterfaceClass = getMockInterface(mockClass);
+		
+		if (mockInterfaceClass == null) {
+			throw new DependencyInjectionException("There is no suitable interfaces for class: " + mockClass.getCanonicalName());
+		}
+		
+		if (mockRegistry.containsKey(mockInterfaceClass.getCanonicalName())) {
+			return mockRegistry.get(mockInterfaceClass.getCanonicalName());
+		}
+		else {
+			try {
+				Object instanceOfImplementationClass = mockClass.newInstance();
+				mockRegistry.put(mockInterfaceClass.getCanonicalName(), instanceOfImplementationClass);
+				return instanceOfImplementationClass;
+			}
+			catch (IllegalAccessException | InstantiationException e) {
+				throw new DependencyInjectionException("Unable to instantiate the Mock class: " + mockClass.getCanonicalName(), e);
+			}
+		}
+	}
+	/**
 	 * Instantiate a new EJB instance of a class
 	 * 
 	 * @param ejbField The field that is marked to be injected with an EJB class instance
+	 * @param mockRegistry The register of mocks to inject in place of real implementations
 	 * @param ejbRegistry The EJB registry to reuse existing instance of EJB
 	 * @return The new/reused instance of the EJB ready to be injected
 	 * @throws DependencyInjectionException Error during the instantiation of the new EJB
 	 */
-	static Object instantiateEjb(Field ejbField, Map<String, Object> ejbRegistry) throws DependencyInjectionException {
+	static Object instantiateEjb(Field ejbField, Map<String, Object> mockRegistry, Map<String, Object> ejbRegistry) throws DependencyInjectionException {
 		Class implementationClass = findImplementationClass(ejbField.getType());
 		
 		if (ejbRegistry.containsKey(implementationClass.getCanonicalName())) {
@@ -80,14 +137,59 @@ public class DependencyInjectorHelper {
 		}
 		else {
 			try {
-				Object instanceOfImplementationClass = implementationClass.newInstance();
+				// Prepare the object storage
+				Object instanceOfImplementationClass;
+				
+				// Check if the EJB field is mockabe
+				Class mockInterfaceClass = getMockInterface(implementationClass);
+				if (mockInterfaceClass!= null && mockRegistry.containsKey(mockInterfaceClass.getCanonicalName())) {
+					instanceOfImplementationClass = mockRegistry.get(mockInterfaceClass.getCanonicalName());
+				}
+				else {
+					instanceOfImplementationClass = implementationClass.newInstance();
+				}
+				
+				// Invoke the @PostConstruct methods
+				invokePostConstruct(instanceOfImplementationClass);
+				
+				// Store in cache the EJB instance
 				ejbRegistry.put(implementationClass.getCanonicalName(), instanceOfImplementationClass);
+				
 				return instanceOfImplementationClass;
 			}
 			catch (IllegalAccessException | InstantiationException e) {
 				throw new DependencyInjectionException("Unable to instantiate the EJB.", e);
 			}
 		}
+	}
+	
+	/**
+	 * Invoke the methods which are annotated with @PostConstruct
+	 * 
+	 * @param obj The object to investigate
+	 * @throws DependencyInjectionException Any error due to the invocation of the post construct methods
+	 */
+	static void invokePostConstruct(Object obj) throws DependencyInjectionException {
+		Class cl = obj.getClass();
+		
+		// Check across the class hierarchy
+		do {
+			// Retrieve the methods
+			for (Method m : cl.getDeclaredMethods()) {
+				// Check if @PostConstruct is present
+				if (m.getAnnotation(PostConstruct.class) != null) {
+					try {
+						m.invoke(obj);
+					}
+					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						throw new DependencyInjectionException("Unable to call the method " + m.getName() + " on object of class " + 
+							cl.getCanonicalName() + ". @PostConstruct methods must be empty args methods.");
+					}
+				}
+			}
+
+			cl = cl.getSuperclass();
+		} while (cl != Object.class);
 	}
 	
 	/**
