@@ -5,9 +5,12 @@ import com.lotaris.junitee.dummy.DummyGeneratorWithDaos;
 import com.lotaris.junitee.dummy.FirstDao;
 import com.lotaris.junitee.dummy.GeneratorWithComplexDao;
 import com.lotaris.junitee.dummy.GeneratorWithInheritance;
+import com.lotaris.junitee.generator.IDataGenerator;
 import com.lotaris.junitee.generator.InjectDataGenerator;
 import com.lotaris.rox.annotations.RoxableTest;
 import com.lotaris.rox.annotations.RoxableTestClass;
+import javax.ejb.EJB;
+import javax.ejb.Local;
 import javax.persistence.EntityManager;
 import org.junit.Before;
 import org.junit.Test;
@@ -135,11 +138,45 @@ public class DependencyInjectorTest {
 		assertNull("The inside data generator should not be instantiated", odg.insideDataGenerator);
 	}
 
+	@Test
+	@RoxableTest(key = "2a1087dd1cac")
+	public void usingMockableAnnotationShouldAllowToUseMockInPlaceOfRealClass() {
+		SimpleDataGenerator sdg = new SimpleDataGenerator();
+		
+		DependencyInjector.inject(sdg, em, false);
+		
+		String result = sdg.testMethod();
+		
+		assertEquals("Method on the mock instance should be called.", "Mock Class", result);
+	}
+
 	public static class OutsideDataGenerator {
 		@InjectDataGenerator
 		private InsideDataGenerator insideDataGenerator;
 	}
 	
 	public static class InsideDataGenerator {
+	}
+
+	@Local
+	public interface IMockServiceForTest { String test(); }
+	public static class MockServiceForTest implements IMockServiceForTest { @Override public String test() { return "Real Class"; } }
+	public static class MockServiceRealMock implements IMockServiceForTest { @Override public String test() { return "Mock Class"; } }
+	
+	public class SimpleDataGenerator implements IDataGenerator {
+		@EJB @UseMock(MockServiceRealMock.class)
+		private IMockServiceForTest localService;
+		
+		@Override
+		public void generate() {
+		}
+		
+		@Override
+		public void cleanup() {
+		}
+		
+		public String testMethod() {
+			return localService.test();
+		}
 	}
 }

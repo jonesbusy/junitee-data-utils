@@ -66,8 +66,8 @@ public class DependencyInjector {
 					Object declaredFieldObjectInstantiated = null;
 					
 					// Register the possible mocks to use during the chaing invocation
-					if (declaredField.getAnnotation(Mockable.class) != null) {
-						for (Class mockClass : declaredField.getAnnotation(Mockable.class).value()) {
+					if (declaredField.getAnnotation(UseMock.class) != null) {
+						for (Class mockClass : declaredField.getAnnotation(UseMock.class).value()) {
 							DependencyInjectorHelper.instantiateMock(mockClass, mockRegistry);
 						}
 					}

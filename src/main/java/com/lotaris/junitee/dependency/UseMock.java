@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
  */
 @Target({ElementType.FIELD})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface Mockable {
+public @interface UseMock {
 	/**
 	 * @return List class that can be used to mock other classes
 	 */

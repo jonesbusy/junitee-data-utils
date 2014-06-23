@@ -5,7 +5,7 @@
   <groupId>com.lotaris.junitee</groupId>
   <artifactId>junitee-data-utils</artifactId>
 	<name>JUnit J2EE Data Utils</name>
-  <version>1.8.0-SNAPSHOT</version>
+  <version>1.9.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <properties>
