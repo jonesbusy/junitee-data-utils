@@ -179,7 +179,16 @@ public class DependencyInjectorHelper {
 				// Check if @PostConstruct is present
 				if (m.getAnnotation(PostConstruct.class) != null) {
 					try {
+						boolean isAccessible = m.isAccessible();
+						if (!isAccessible) {
+							m.setAccessible(true);
+						}
+						
 						m.invoke(obj);
+						
+						if (!isAccessible) {
+							m.setAccessible(false);
+						}
 					}
 					catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 						throw new DependencyInjectionException("Unable to call the method " + m.getName() + " on object of class " + 
