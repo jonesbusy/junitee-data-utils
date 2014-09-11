@@ -2,6 +2,7 @@ package com.lotaris.junitee.generator;
 
 import com.lotaris.junitee.dependency.DependencyInjector;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import javax.persistence.EntityManager;
@@ -129,8 +130,9 @@ public class DataGeneratorManager implements TestRule {
 		
 		try {
 			entityManager.getTransaction().begin();
-			for (IDataGenerator dataGenerator : dataGenerators.values()) {
-				dataGenerator.generate();
+			Class<? extends IDataGenerator>[] dataGeneratorClass = dgAnnotation.value();
+			for (int i = 0; i < dataGeneratorClass.length; i++) {
+				getDataGenerator(dataGeneratorClass[i]).generate();
 			}
 			entityManager.getTransaction().commit();
 		}
@@ -157,8 +159,10 @@ public class DataGeneratorManager implements TestRule {
 		if (dgAnnotation != null && dgAnnotation.executeCleanup()) {
 			try {
 				entityManager.getTransaction().begin();
-				for (IDataGenerator dataGenerator : dataGenerators.values()) {
-					dataGenerator.cleanup();
+				
+				Class<? extends IDataGenerator>[] dataGeneratorClass = dgAnnotation.value();
+				for (int i = dataGeneratorClass.length - 1; i >= 0; i--) {
+					getDataGenerator(dataGeneratorClass[i]).cleanup();
 				}
 				entityManager.getTransaction().commit();
 			}

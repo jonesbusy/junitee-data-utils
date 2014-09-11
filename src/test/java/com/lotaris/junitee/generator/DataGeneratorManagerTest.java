@@ -1,9 +1,12 @@
 package com.lotaris.junitee.generator;
 
+import com.lotaris.junitee.dummy.AbstractOrderGenerator;
 import com.lotaris.junitee.dummy.BeforeCrashGenerator;
 import com.lotaris.junitee.dummy.DataGeneratorWithDao;
 import com.lotaris.junitee.dummy.DataGeneratorWithInheritanceAndDaos;
 import com.lotaris.junitee.dummy.DoNotCrashGenerator;
+import com.lotaris.junitee.dummy.OrderOneGenerator;
+import com.lotaris.junitee.dummy.OrderTwoGenerator;
 import com.lotaris.rox.annotations.RoxableTest;
 import java.lang.annotation.Annotation;
 import javax.persistence.EntityManager;
@@ -336,4 +339,33 @@ public class DataGeneratorManagerTest {
 		verify(entityTransaction, times(4)).begin();
 		verify(entityTransaction, times(4)).commit();
 	}
+	
+	@Test
+	@RoxableTest(key = "3b2f42db4258")
+	public void twoDataGeneratorMustEnsureTheRightOrderOfExecutionOfCleanupAndGenerate() throws Throwable {
+		DataGenerator annotation = new DataGenerator() {
+			@Override
+			public Class<? extends IDataGenerator>[] value() {
+				return new Class[] { OrderOneGenerator.class, OrderTwoGenerator.class };
+			}
+
+			@Override
+			public Class<? extends Annotation> annotationType() {
+				return DataGenerator.class;
+			}
+
+			@Override
+			public boolean executeCleanup() {
+				return true;
+			}
+		};
+		
+		Description description = Description.createSuiteDescription("Some description", annotation);
+		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
+		
+		// Evaluate will call two times begin() and commit() for the generate/cleanup data of the data generator
+		gm.apply(statement, description).evaluate();
+		
+		assertEquals("1234", AbstractOrderGenerator.order);
+	}	
 }
