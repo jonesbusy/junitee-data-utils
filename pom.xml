@@ -4,9 +4,32 @@
 
   <groupId>com.lotaris.junitee</groupId>
   <artifactId>junitee-data-utils</artifactId>
-	<name>JUnit Java EE Data Utils</name>
   <version>1.10.1-SNAPSHOT</version>
   <packaging>jar</packaging>
+
+	<name>JUnit Java EE Data Utils</name>
+	<description>JUnit data utilities to manage data in a database when doing tests like API tests against an application in application server.</description>
+
+	<licenses>
+		<license>
+			<name>MIT License</name>
+			<url>http://www.opensource.org/licenses/mit-license.php</url>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Laurent Prevost</name>
+			<email>laurent.prevost@lotaris.com</email>
+			<organization>https://github.com/lotaris</organization>
+		</developer>
+	</developers>
+
+	<scm>
+		<connection>scm:git:git@github.com:lotaris/junitee-data-utils.git</connection>
+		<developerConnection>scm:git:git@github.com:lotaris/junitee-data-utils.git</developerConnection>
+		<url>https://github.com/lotaris/junitee-data-utils</url>
+	</scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
