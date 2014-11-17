@@ -72,6 +72,7 @@ public class DataGeneratorManager implements TestRule {
 	 * @param dataGeneratorClass The data generator class to lookup
 	 * @return The data generator found, null otherwise
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends IDataGenerator> T getDataGenerator(Class<T> dataGeneratorClass) {
 		// Check if the data generator exists
 		if (dataGenerators.containsKey(dataGeneratorClass)) {

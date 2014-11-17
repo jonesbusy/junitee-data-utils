@@ -49,6 +49,7 @@ public final class InflectorHelper {
 		}
 		
 		try {
+			@SuppressWarnings("unchecked")
 			Constructor constructor = implementationClass.getConstructor();
 			if (!Modifier.isPublic(constructor.getModifiers())) {
 				throw new NoValidClassException("The empty constructor of class " + implementationClass.getSimpleName() + " must be public.");

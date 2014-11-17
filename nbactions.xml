@@ -16,7 +16,6 @@
     <displayName>Deploy</displayName>
     <goals>
       <goal>clean</goal>
-      <goal>install</goal>
 			<goal>deploy</goal>
       <goal>-e</goal>
       <goal>-PlotarisBuildSource</goal>

@@ -72,6 +72,7 @@ public class FinderManager implements TestRule {
 	 * @param finderClass The finder class to lookup
 	 * @return The finder found, null otherwise
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends IFinder> T getFinder(Class<T> finderClass) {
 		return (T) finders.get(finderClass);
 	}

@@ -40,6 +40,7 @@ public class FinderManagerTest {
 
 	@Test
 	@RoxableTest(key = "8bed5e1bdf4f")
+	@SuppressWarnings("unchecked")
 	public void finderForGivenDescrptionShouldBeAvailableIntoTheTest() throws Throwable {
 		Finder annotation = new Finder() {
 			@Override
@@ -63,6 +64,7 @@ public class FinderManagerTest {
 
 	@Test
 	@RoxableTest(key = "6897d7617dec")
+	@SuppressWarnings("unchecked")
 	public void registeringTwoFindersOfTheSameTypeShouldBeForbiden() throws Throwable {
 		Finder annotation = new Finder() {
 			@Override
@@ -88,6 +90,7 @@ public class FinderManagerTest {
 
 	@Test
 	@RoxableTest(key = "2ba81197832e")
+	@SuppressWarnings("unchecked")
 	public void finderWithDaoShouldHaveTheDaoNotNullButDaoAreInstantiatedOnlyLazily() throws Throwable {
 		Finder annotation = new Finder() {
 			@Override
@@ -117,6 +120,7 @@ public class FinderManagerTest {
 
 	@Test
 	@RoxableTest(key = "be1b9b84fd34")
+	@SuppressWarnings("unchecked")
 	public void inheritedFinderWithDaoShouldHaveAllInheritedDaoNotNullButDaoAreInstantiatedOnlyLazily() throws Throwable {
 		Finder annotation = new Finder() {
 			@Override

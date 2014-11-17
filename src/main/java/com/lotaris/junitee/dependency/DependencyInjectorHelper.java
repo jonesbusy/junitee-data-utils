@@ -75,6 +75,7 @@ public class DependencyInjectorHelper {
 	 * @param mockClass The mock class for which the investigation must be done
 	 * @return The interface which is annotated with @Local or @Remote
 	 */
+	@SuppressWarnings("unchecked")
 	static Class getMockInterface(Class mockClass) {
 		Class current = mockClass;
 		

@@ -48,6 +48,7 @@ public class DataGeneratorManagerTest {
 
 	@Test
 	@RoxableTest(key = "731192f53198")
+	@SuppressWarnings("unchecked")
 	public void failingBeforeMethodOnGeneratorShouldAvoidStatementToBeEvaluated() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override
@@ -86,6 +87,7 @@ public class DataGeneratorManagerTest {
 	
 	@Test
 	@RoxableTest(key = "5baec6dfc545")
+	@SuppressWarnings("unchecked")
 	public void failingEvaluateMethodOnTestMethodShouldAvoidAfterToBeEvaluatedWhenExecuteAfterIsFalse() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override
@@ -121,6 +123,7 @@ public class DataGeneratorManagerTest {
 
 	@Test
 	@RoxableTest(key = "4d88eb036a72")
+	@SuppressWarnings("unchecked")
 	public void generatorForGivenDescrptionShouldBeAvailableIntoTheTest() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override
@@ -149,6 +152,7 @@ public class DataGeneratorManagerTest {
 
 	@Test
 	@RoxableTest(key = "f7fd1e684d9a")
+	@SuppressWarnings("unchecked")
 	public void registeringTwoGeneratorOfTheSameTypeShouldBeForbiden() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override
@@ -179,6 +183,7 @@ public class DataGeneratorManagerTest {
 
 	@Test
 	@RoxableTest(key = "97515a548141")
+	@SuppressWarnings("unchecked")
 	public void generatorWithDaoShouldHaveTheDaoNotNull() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override
@@ -206,6 +211,7 @@ public class DataGeneratorManagerTest {
 
 	@Test
 	@RoxableTest(key = "9b956721084f")
+	@SuppressWarnings("unchecked")
 	public void inheritedGeneratorWithDaoShouldHaveAllInheritedDaoNotNull() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override
@@ -234,6 +240,7 @@ public class DataGeneratorManagerTest {
 	
 	@Test
 	@RoxableTest(key = "147fc8668303")
+	@SuppressWarnings("unchecked")
 	public void callingCreateMethodsShouldBeWrappedIntoTransaction() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override
@@ -270,6 +277,7 @@ public class DataGeneratorManagerTest {
 
 	@Test
 	@RoxableTest(key = "238e7a9ebb8a")
+	@SuppressWarnings("unchecked")
 	public void callingDeleteMethodsShouldBeWrappedIntoTransaction() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override
@@ -306,6 +314,7 @@ public class DataGeneratorManagerTest {
 
 	@Test
 	@RoxableTest(key = "c5113083fadf")
+	@SuppressWarnings("unchecked")
 	public void callingUpdateMethodsShouldBeWrappedIntoTransaction() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override
@@ -342,6 +351,7 @@ public class DataGeneratorManagerTest {
 	
 	@Test
 	@RoxableTest(key = "3b2f42db4258")
+	@SuppressWarnings("unchecked")
 	public void twoDataGeneratorMustEnsureTheRightOrderOfExecutionOfCleanupAndGenerate() throws Throwable {
 		DataGenerator annotation = new DataGenerator() {
 			@Override

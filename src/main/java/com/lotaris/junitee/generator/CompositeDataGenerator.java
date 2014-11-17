@@ -143,6 +143,7 @@ public abstract class CompositeDataGenerator implements IDataGenerator {
 	 * @return The generator found
 	 * @exception IllegalStateException In case the data generator is not found
 	 */
+	@SuppressWarnings("unchecked")
 	protected <T> T getDataGenerator(String dataDataGeneratorName, Class<? extends T> dataGeneratorClass) {
 		if (!dataGenerators.containsKey(dataDataGeneratorName)) {
 			throw new IllegalStateException("There is no " + dataDataGeneratorName + " data generator.");

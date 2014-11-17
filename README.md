@@ -4,22 +4,13 @@
 
 ## Usage
 
-1. Clone the repository.
-
-2. Run the following command
-
-```bash
-cd <projectFolder>
-mvn clean install
-```
-
-3. Put the following dependency in your pom.xml
+1. Put the following dependency in your pom.xml
 
 ```xml
 <dependency>
   <groupId>com.lotaris.junitee</groupId>
   <artifactId>junitee-data-utils</artifactId>
-  <version>1.10.0</version>
+  <version>2.0.0</version>
 </dependenc>
 ```
 
