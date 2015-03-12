@@ -38,6 +38,12 @@ public class DataGeneratorManager implements TestRule {
 	private Map<Class, IDataGenerator> dataGenerators = new HashMap<>();
 	
 	/**
+	 * Determine if a test is running or not. This is required to enable/disable
+	 * the behavior of method interceptions during the test method run.
+	 */
+	private static Boolean testRunning = false;
+	
+	/**
 	 * Force the construction of the data generator with an entity manager
 	 * 
 	 * @param entityManagerFactory Entity manager factory to create new entity managers
@@ -56,9 +62,11 @@ public class DataGeneratorManager implements TestRule {
 				
 				try {
 					generate(description, entityManager);
+					testRunning = true;
 					base.evaluate();
 				}
 				finally {
+					testRunning = false;
 					cleanup(description, entityManager);
 				}
 			}
@@ -200,7 +208,7 @@ public class DataGeneratorManager implements TestRule {
 		@Override
 		public Object intercept(Object obj, Method method, Object[] args, MethodProxy proxy) throws Throwable {
 			// Invoke create/update/delete methods encapsulated into a transaction
-			if (method.getName().startsWith("create") || method.getName().startsWith("update") || method.getName().startsWith("delete")) {
+			if (testRunning && method.getName().startsWith("create") || method.getName().startsWith("update") || method.getName().startsWith("delete")) {
 				try {
 					entityManager.getTransaction().begin();
 					Object result = proxy.invokeSuper(obj, args);

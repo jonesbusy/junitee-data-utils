@@ -18,6 +18,7 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.internal.util.reflection.Whitebox;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -262,8 +263,14 @@ public class DataGeneratorManagerTest {
 		Description description = Description.createSuiteDescription("Some description", annotation);
 		DataGeneratorManager gm = new DataGeneratorManager(entityManagerFactory);
 
-		// Evaluate will call two times begin() and commit() for the generate/cleanup data of the data generator
+		// Evaluate will call two times begin() and commit() for the generate and cleanup data of the data generator
 		gm.apply(statement, description).evaluate();
+		verify(entityTransaction, times(2)).begin();
+		verify(entityTransaction, times(2)).commit();
+		
+		// Dirty hack to artificially create a situation where the next method calls are simulated to be run
+		// inside the test method
+		Whitebox.setInternalState(gm, "testRunning", true);
 		
 		gm.getDataGenerator(DataGeneratorWithDao.class).createSomething();
 		verify(entityTransaction, times(3)).begin();

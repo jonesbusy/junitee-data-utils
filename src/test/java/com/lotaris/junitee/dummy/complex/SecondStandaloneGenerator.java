@@ -9,7 +9,7 @@ import com.lotaris.junitee.generator.CompositeDataGenerator;
 public class SecondStandaloneGenerator extends CompositeDataGenerator {
 	
 	@Override
-	protected void createData() {
+	protected void generateData() {
 		Object generatedData = getDataGenerator(FirstStandaloneGenerator.class).getGeneratedData();
 	}
 

@@ -25,7 +25,7 @@ public class CompositeDataGeneratorTest {
 		
 		CompositeDataGenerator cdg = new CompositeDataGenerator() {
 			@Override protected void setup() { register(dg); oc.setupCalled = true; oc.orderChecker += "+setup"; }
-			@Override protected void createData() { oc.createCalled = true; oc.orderChecker += "+create"; }
+			@Override protected void generateData() { oc.createCalled = true; oc.orderChecker += "+create"; }
 			@Override protected void cleanData() { oc.cleanCalled = true; oc.orderChecker += "+clean"; }
 		};
 		
@@ -48,7 +48,7 @@ public class CompositeDataGeneratorTest {
 		
 		CompositeDataGenerator cdg = new CompositeDataGenerator() {
 			@Override protected void setup() { oc.setupCalled = true; oc.orderChecker += "+setup"; }
-			@Override protected void createData() { oc.createCalled = true; oc.orderChecker += "+create"; }
+			@Override protected void generateData() { oc.createCalled = true; oc.orderChecker += "+create"; }
 			@Override protected void cleanData() { oc.cleanCalled = true; oc.orderChecker += "+clean"; }
 		};
 		
@@ -89,7 +89,7 @@ public class CompositeDataGeneratorTest {
 				oc.orderChecker += "+setup(afterRegister)"; 
 			}
 			
-			@Override protected void createData() { oc.createCalled = true; oc.orderChecker += "+create"; }
+			@Override protected void generateData() { oc.createCalled = true; oc.orderChecker += "+create"; }
 			@Override protected void cleanData() { oc.cleanCalled = true; oc.orderChecker += "+clean"; }
 		};
 		
@@ -112,7 +112,7 @@ public class CompositeDataGeneratorTest {
 		final ObjectChecker oc = new ObjectChecker();
 		
 		CompositeDataGenerator cdg = new CompositeDataGenerator() {
-			@Override protected void createData() { oc.createCalled = true; oc.orderChecker += "+create"; }
+			@Override protected void generateData() { oc.createCalled = true; oc.orderChecker += "+create"; }
 			@Override protected void cleanData() { oc.cleanCalled = true; oc.orderChecker += "+clean"; }
 		};
 		
@@ -132,13 +132,13 @@ public class CompositeDataGeneratorTest {
 	public void itShouldNotBePossibleToDependsCompositeDataGeneratorOnItself() {
 		CompositeDataGenerator cdg = new CompositeDataGenerator() {
 			private CompositeDataGenerator internalComposite = new CompositeDataGenerator() { 
-				@Override protected void createData() {} 
+				@Override protected void generateData() {} 
 				@Override protected void cleanData() {}
 			};
 
 			@Override protected void setup() { internalComposite.dependsOn(internalComposite); }
 			
-			@Override protected void createData() {}
+			@Override protected void generateData() {}
 			@Override protected void cleanData() {}
 		};
 		
@@ -156,7 +156,7 @@ public class CompositeDataGeneratorTest {
 	public void itShouldNotBePossibleToDependsTwiceOnTheSameDataGenerator() {
 		CompositeDataGenerator cdg = new CompositeDataGenerator() {
 			private CompositeDataGenerator internalComposite = new CompositeDataGenerator() { 
-				@Override protected void createData() {} 
+				@Override protected void generateData() {} 
 				@Override protected void cleanData() {}
 			};
 
@@ -165,7 +165,7 @@ public class CompositeDataGeneratorTest {
 				dependsOn("dg1", internalComposite);
 			}
 			
-			@Override protected void createData() {}
+			@Override protected void generateData() {}
 			@Override protected void cleanData() {}
 		};
 		
@@ -183,7 +183,7 @@ public class CompositeDataGeneratorTest {
 	public void itShouldNotBePossibleToDependsWhenNullNameIsProvided() {
 		CompositeDataGenerator cdg = new CompositeDataGenerator() {
 			private CompositeDataGenerator internalComposite = new CompositeDataGenerator() { 
-				@Override protected void createData() {} 
+				@Override protected void generateData() {} 
 				@Override protected void cleanData() {}
 			};
 
@@ -191,7 +191,7 @@ public class CompositeDataGeneratorTest {
 				dependsOn(null, internalComposite);
 			}
 			
-			@Override protected void createData() {}
+			@Override protected void generateData() {}
 			@Override protected void cleanData() {}
 		};
 		
@@ -215,7 +215,7 @@ public class CompositeDataGeneratorTest {
 			}
 
 			@Override
-			protected void createData() {
+			protected void generateData() {
 				assertEquals("Number to generate should be correct", 10, getNumberToGenerate());
 				assertEquals("Use prefix should be correct", "test", getPrefix());
 			}

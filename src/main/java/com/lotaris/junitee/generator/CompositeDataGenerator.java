@@ -187,7 +187,7 @@ public abstract class CompositeDataGenerator implements IDataGenerator {
 	 * In that method, you should have access to other generators
 	 * and the result of the data generation.
 	 */
-	protected abstract void createData();
+	protected abstract void generateData();
 	
 	@Override
 	public final void generate() {
@@ -197,7 +197,7 @@ public abstract class CompositeDataGenerator implements IDataGenerator {
 			first.generate();
 		}
 
-		createData();
+			generateData();
 	}
 
 	/**
