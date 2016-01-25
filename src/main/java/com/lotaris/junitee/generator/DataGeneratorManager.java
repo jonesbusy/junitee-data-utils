@@ -1,12 +1,13 @@
 package com.lotaris.junitee.generator;
 
 import com.lotaris.junitee.dependency.DependencyInjector;
+import com.lotaris.junitee.dependency.UsePersitenceUnit;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
 import net.sf.cglib.proxy.MethodProxy;
@@ -38,6 +39,11 @@ public class DataGeneratorManager implements TestRule {
 	private Map<Class, IDataGenerator> dataGenerators = new HashMap<>();
 	
 	/**
+	 * Keep track of entity manager used in the test
+	 */
+	private Map<String, EntityManager> entityManagers = new HashMap<>();
+	
+	/**
 	 * Determine if a test is running or not. This is required to enable/disable
 	 * the behavior of method interceptions during the test method run.
 	 */
@@ -57,17 +63,15 @@ public class DataGeneratorManager implements TestRule {
 		return new Statement() {
 			@Override
 			public void evaluate() throws Throwable {
-				// Create an entity manager to share between the before and after phase
-				EntityManager entityManager = entityManagerFactory.createEntityManager();
 				
-				try {
-					generate(description, entityManager);
+				try {	
+					generate(description);
 					testRunning = true;
 					base.evaluate();
 				}
 				finally {
 					testRunning = false;
-					cleanup(description, entityManager);
+					cleanup(description);
 				}
 			}
 		};
@@ -99,7 +103,7 @@ public class DataGeneratorManager implements TestRule {
 	 * @param entityManager The entity manager
 	 * @throws Throwable Any errors 
 	 */
-	private void generate(Description description, EntityManager entityManager) throws DataGeneratorException {
+	private void generate(Description description) throws DataGeneratorException {
 		// Clear the generators used in a previous test. Clear must be there because 
 		// there is no warranty to reach the after if a test fails.
 		dataGenerators.clear();
@@ -114,15 +118,33 @@ public class DataGeneratorManager implements TestRule {
 		for (Class<? extends IDataGenerator> dataGeneratorClass : dgAnnotation.value()) {
 			// Check if the data generator is already instantiated.
 			if (!dataGenerators.containsKey(dataGeneratorClass)) {
+				
+				// Override default entity manager
+				EntityManager em;
+				if(dataGeneratorClass.getAnnotation(UsePersitenceUnit.class) == null) {
+					System.out.println("Create default EM");
+					em = entityManagerFactory.createEntityManager();
+				}
+				else {
+					System.out.println("Override EM");
+					em = Persistence.createEntityManagerFactory(dataGeneratorClass.getAnnotation(UsePersitenceUnit.class).name()).createEntityManager();
+				}
+				
+				// TODO : Don't know if there's on other way to check for the persistence unit name
+				String entityManagerKey = (String)em.getProperties().get("com.lotaris.junite-data-utils.unit.name");
+				if(!entityManagers.containsKey(entityManagerKey)) {
+					entityManagers.put(entityManagerKey, em);
+				}
+				
 				try {
 					// Instantiate a new data generator proxy, inject the EJB and keep track of it.
 					IDataGenerator dataGenerator = (IDataGenerator) Enhancer.create(
 						dataGeneratorClass, 
 						new Class[] {IDataGenerator.class}, 
-						new GeneratorCallback(entityManager)
+						new GeneratorCallback(em)
 					);
 					
-					DependencyInjector.inject(dataGenerator, entityManager, true);
+					DependencyInjector.inject(dataGenerator, em, true);
 					dataGenerators.put(dataGeneratorClass, dataGenerator);
 				}
 				catch (Exception ex) {
@@ -137,21 +159,29 @@ public class DataGeneratorManager implements TestRule {
 			}
 		}
 		
-		try {
-			entityManager.getTransaction().begin();
+		try {			
+			for(EntityManager em : entityManagers.values()) {
+				em.getTransaction().begin();
+			}
 			Class<? extends IDataGenerator>[] dataGeneratorClass = dgAnnotation.value();
 			for (int i = 0; i < dataGeneratorClass.length; i++) {
 				getDataGenerator(dataGeneratorClass[i]).generate();
 			}
-			entityManager.getTransaction().commit();
+			for(EntityManager em : entityManagers.values()) {
+				em.getTransaction().commit();
+			}
 		}
 		catch (Exception e) {
 			LOG.error("Unkown error", e);
-			entityManager.getTransaction().rollback();
+			for(EntityManager em : entityManagers.values()) {
+				em.getTransaction().rollback();
+			}
 			throw new DataGeneratorException("An unexpected error occured during the data generation.", e);
 		}
 		finally {
-			entityManager.clear();
+			for(EntityManager em : entityManagers.values()) {
+				em.clear();
+			}
 		}
 	}
 
@@ -162,26 +192,34 @@ public class DataGeneratorManager implements TestRule {
 	 * @param entityManager The entity manager
 	 * @throws Throwable Any errors 
 	 */
-	private void cleanup(Description description, EntityManager entityManager) throws DataGeneratorException {
+	private void cleanup(Description description) throws DataGeneratorException {
 		DataGenerator dgAnnotation = description.getAnnotation(DataGenerator.class);
 		
 		if (dgAnnotation != null && dgAnnotation.executeCleanup()) {
 			try {
-				entityManager.getTransaction().begin();
+				for(EntityManager em : entityManagers.values()) {
+					em.getTransaction().begin();
+				}
 				
 				Class<? extends IDataGenerator>[] dataGeneratorClass = dgAnnotation.value();
 				for (int i = dataGeneratorClass.length - 1; i >= 0; i--) {
 					getDataGenerator(dataGeneratorClass[i]).cleanup();
 				}
-				entityManager.getTransaction().commit();
+			for(EntityManager em : entityManagers.values()) {
+				em.getTransaction().commit();
+			}
 			}
 			catch (Exception e) {
 				LOG.error("Unknow error", e);
-				entityManager.getTransaction().rollback();
+			for(EntityManager em : entityManagers.values()) {
+				em.getTransaction().rollback();
+			}
 				throw new DataGeneratorException("An unexpected error occured during cleanup phase.", e);
 			}
 			finally {
-				entityManager.clear();
+				for(EntityManager em : entityManagers.values()) {
+					em.clear();
+				}
 			}
 		}
 	}
